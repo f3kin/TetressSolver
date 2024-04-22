@@ -58,7 +58,7 @@ class BoardMutation:
 
 
 class Board:
-    """
+    """         
     A class representing the game board for internal use in the referee. 
 
     NOTE: Don't assume this class is an "ideal" board representation for your
