@@ -16,7 +16,11 @@ class new_board:
 		self,
 		initial_player: PlayerColor = PlayerColor.RED
 	):
-		self.board = np.zeros((11, 11), dtype=int)
+		self.cells = np.zeros((11, 11), dtype=np.int8)
+
+		# Possibly represent turn color as a bool? True = blue, False = red.
+		# Thus, size of board object is 121 bytes + 1 bit
+		# Then initial players default value could just be red.
 		self._turn_color: PlayerColor = initial_player
 		
 
@@ -39,7 +43,7 @@ class new_board:
 		row: int,
 		col: int
 	) -> np.int8:
-		return self.new_board[row][row]
+		return self.cells[row][col]
 	
 	"""
 	Desc: Change the value of a square on the board
@@ -60,7 +64,7 @@ class new_board:
 		col: int,
 		new_val: np.int8
 	) -> None:
-		np.board[row][col] = new_val
+		self.cells[row][col] = new_val
 
 
 	"""
@@ -71,10 +75,10 @@ class new_board:
 	Notes: Could just be done with "BOARD".copy() but will be nicer to use a function
 	"""
 
-	#TODO Fix this
-	def copy_board(
-		self,
-		board: new_board
-	) -> new_board:
-		return board.copy()
+#TODO Fix this
+def copy_board(
+	board: new_board
+) -> new_board:
+	return board.cells.copy()  # Return new_board.__init__(cells, current_turn)
+
 	
