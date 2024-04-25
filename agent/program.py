@@ -15,6 +15,7 @@ class Agent:
         This constructor method runs when the referee instantiates the agent.
         Any setup and/or precomputation should be done here.
         """
+        # TODO: IMPLEMENT PRECOMPUTATION HERE
         self._color = color
         match color:
             case PlayerColor.RED:
@@ -32,6 +33,7 @@ class Agent:
         # the agent is playing as BLUE or RED. Obviously this won't work beyond
         # the initial moves of the game, so you should use some game playing
         # technique(s) to determine the best action to take.
+        #TODO: PUT ACTION CHOOSING LOGIC
         match self._color:
             case PlayerColor.RED:
                 print("Testing: RED is playing a PLACE action")
@@ -64,3 +66,51 @@ class Agent:
         # demonstration purposes. You should replace this with your own logic
         # to update your agent's internal game state representation.
         print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
+
+###### Functions specific to Minimax #####
+def minimax(state, game, a, b):
+    if cutoff_test(state):
+        return evaluation(state)
+    return max_value(state, game, a, b) # Assumes we are always maximising, think this is correct ?
+    
+def max_value(state, game, a, b):
+    # State - current game state (probably the board)
+    # Game - game description
+    # a - the best score for max along the path to state
+    # b - the best score for min along the path to state
+    if cutoff_test(state):
+        return evaluation(state)
+    children = expand(state)
+    for child in children:
+        a = max(a, min_value(child, game, a, b))
+        if a >= b:
+            return b
+    return a
+
+def min_value(state, game, a ,b):
+    if cutoff_test(state):
+        return evaluation(state)
+    children = expand(state)
+    for child in children:
+        b = min(b,max_value(child, game, a, b))
+        if b <= a:
+            return a
+    return b
+
+def cutoff_test(state):
+
+##### General Search Functions ######
+def expand(state):
+    return 0
+
+def evaluation(state):
+    # takes in a board state and returns a numerical value for the value of a node
+    # Possible ideas for evaluation:
+        # Branching factor of opponent
+        # Opponent pieces left remaining
+        # Amount of our pieces left remaining
+    return 0
+
+def valid_move(state):
+    # Implement from part A
+
