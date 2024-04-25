@@ -2,15 +2,15 @@
 
 from dataclasses import dataclass
 
-from ..referee.game.pieces import Piece, PieceType, create_piece
-from ..referee.game.coord import Coord, Direction
-from ..referee.game.player import PlayerColor
-from ..referee.game.actions import Action, PlaceAction
-from ..referee.game.exceptions import IllegalActionException
-from ..referee.game.constants import *
+from referee.game.pieces import Piece, PieceType, create_piece
+from referee.game.coord import Coord, Direction
+from referee.game.player import PlayerColor
+from referee.game.actions import Action, PlaceAction
+from referee.game.exceptions import IllegalActionException
+from referee.game.constants import *
 import numpy as np
 
-class simple_board:
+class Simple_Board:
 
 	"""
 	In simple_board, each square has either 0, 1 or 2.
@@ -57,12 +57,13 @@ class simple_board:
 	def copy_board(
 		self
 	):		
-		new_board = simple_board()
+		new_board = Simple_Board()
 		new_board.board = np.copy(self.board)
 
 		# TODO Invert this to save switching later?
 		new_board.is_blue_turn = self.is_blue_turn	
 		return new_board
 		
+	
 
 
