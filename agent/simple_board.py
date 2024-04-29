@@ -8,6 +8,7 @@ from referee.game.player import PlayerColor
 from referee.game.actions import Action, PlaceAction
 from referee.game.exceptions import IllegalActionException
 from referee.game.constants import *
+from referee.game.board import Board
 import numpy as np
 
 class Simple_Board:
@@ -63,7 +64,31 @@ class Simple_Board:
 		# TODO Invert this to save switching later?
 		new_board.is_blue_turn = self.is_blue_turn	
 		return new_board
-		
 	
 
+	# THis is really ugly. Gotta be a better way to do it
+	def board_to_simple(
+		board: Board
+	)->Simple_Board:
+		
+		new_simple_board = Simple_Board()
+		lst = []
+		for r in range(BOARD_N):
+			for c in range(BOARD_N):
+				cell_state = board.__getitem__(Coord(r,c))
+				if cell_state is None:
+					new_simple_board[r][c] = 0
+				elif cell_state is PlayerColor.RED:
+					new_simple_board[r][c] = 1
+				elif cell_state is PlayerColor.BLUE:
+					new_simple_board[r][c] = 2
 
+
+		
+		return new_simple_board
+	
+	def simple_to_board(
+		self
+	):
+		#some implementation
+		return 0
