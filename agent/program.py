@@ -64,3 +64,9 @@ class Agent:
         # demonstration purposes. You should replace this with your own logic
         # to update your agent's internal game state representation.
         print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
+
+        # This should take the action and update the players internal board. 
+
+        # So take each of the 4 coords from action, and do the add these 
+        # into internal board. After this, do checks to see if we need to 
+        # clear any rows/cols
