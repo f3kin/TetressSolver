@@ -1,6 +1,8 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
+import queue
+
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 
 
@@ -66,20 +68,51 @@ class Agent:
         print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
 
-##### General Search Functions ######
-# This module should be called search(board, colour)
+###### General Expansion logic ######
+# Uses Nic's board format
+def expand(board, color):
+    color_val = 0
+    children = [] #TODO: Increase child storing efficiency from a list
+    #TODO: modify color_val based on input color, Nic's colour rep
+    for square in board:
+        # We have found a square to expand
+        #TODO: Implement improved efficiency from expanding one square at a time
+        if square == color_val:
+            new_children = square_expand(board, square)
+            #TODO: change to adding more efficiently 
+            for child in new_children:
+                children.append(child)
+    
+# Expand from a single square
+def square_expand(board, square):
+    #Initial diamond expanding logic
+    return UCS_expand(board,square)
 
+def UCS_expand(board, square):
+    #TODO: test this by displaying the children printed and showing duplicates etc.
+    # Directions for moving up, down, left, right
+    #TODO: Use purple book to look at effiency ideas
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+    visited = set()  # Keep track of visited nodes
+    frontier = queue.PriorityQueue()  # Priority queue for UCS
+    frontier.put((0, square))  # (cost, position) tuple
+    steps = 4
+    #TODO: Implement expanding logic for adjacent red squares
+    #TODO: Update this for our board setup
+    # Run until there are no more nodes to explore or we reach the step limit
+    while not frontier.empty():
+        cost, current = frontier.get()
+        if cost > steps:
+            continue
+        if current not in visited:
+            visited.add(current)
+            # Explore neighbors
+            for direction in directions:
+                next_row = current[0] + direction[0]
+                next_col = current[1] + direction[1]
+                if 0 <= next_row < len(board) and 0 <= next_col < len(board[0]):
+                    if board[next_row][next_col]:  # We are hitting an obstacle
+                        next_position = (next_row, next_col)
+                        frontier.put((cost + 1, next_position))
 
-def expand(state):
-    return 0
-
-def evaluation(state):
-    # takes in a board state and returns a numerical value for the value of a node
-    # Possible ideas for evaluation:
-        # Branching factor of opponent
-        # Opponent pieces left remaining
-        # Amount of our pieces left remaining
-    return 0
-
-def valid_move(state):
-    # Implement from part A
+    return visited
