@@ -64,3 +64,22 @@ class Agent:
         # demonstration purposes. You should replace this with your own logic
         # to update your agent's internal game state representation.
         print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
+
+
+##### General Search Functions ######
+# This module should be called search(board, colour)
+
+
+def expand(state):
+    return 0
+
+def evaluation(state):
+    # takes in a board state and returns a numerical value for the value of a node
+    # Possible ideas for evaluation:
+        # Branching factor of opponent
+        # Opponent pieces left remaining
+        # Amount of our pieces left remaining
+    return 0
+
+def valid_move(state):
+    # Implement from part A
