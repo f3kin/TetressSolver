@@ -68,6 +68,9 @@ class Agent:
         print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
 ###### Functions specific to Minimax #####
+def search(board, colour):
+    return minimax(board, colour) # Returns the placeaction of the best move to make
+
 def minimax(state, game, a, b):
     if cutoff_test(state):
         return evaluation(state)
