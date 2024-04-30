@@ -98,19 +98,4 @@ def min_value(state, game, a ,b):
     return b
 
 def cutoff_test(state):
-
-##### General Search Functions ######
-def expand(state):
     return 0
-
-def evaluation(state):
-    # takes in a board state and returns a numerical value for the value of a node
-    # Possible ideas for evaluation:
-        # Branching factor of opponent
-        # Opponent pieces left remaining
-        # Amount of our pieces left remaining
-    return 0
-
-def valid_move(state):
-    # Implement from part A
-
