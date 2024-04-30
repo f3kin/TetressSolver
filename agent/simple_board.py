@@ -25,7 +25,7 @@ class Simple_Board:
 	def __init__(
 		self
 	):
-		self.board = np.zeros((11, 11), dtype=np.int8)
+		self.board = np.zeros((12, 12), dtype=np.int8)
 		self.is_blue_turn = False
 
 	def check_square(
@@ -39,6 +39,7 @@ class Simple_Board:
 		position: Coord,
 		is_blue_turn: bool
 	) -> None: 
+		
 
 		# Find who's turn it is and set the colour
 		if (is_blue_turn):
@@ -98,12 +99,14 @@ class Simple_Board:
 
 
 	# THis is really ugly. Gotta be a better way to do it
+	# NOT SURE IF WE NEED THIS NOW I THINK ABOUT IT
+	# I think the flow will just be using action()/update() to update the
+	# referee board and visa versa
 	def board_to_simple(
 		board: Board
 	)->Simple_Board:
 		
 		new_simple_board = Simple_Board()
-		lst = []
 		for r in range(BOARD_N):
 			for c in range(BOARD_N):
 				cell_state = board.__getitem__(Coord(r,c))
@@ -111,15 +114,38 @@ class Simple_Board:
 					new_simple_board[r][c] = 0
 				elif cell_state is PlayerColor.RED:
 					new_simple_board[r][c] = 1
+					# BOARD_N + 1 index holds the num of pieces in the row/col
+					# increase row and col counter by 1 for each piece
+					new_simple_board[r][BOARD_N + 1] += 1
+					new_simple_board[BOARD_N + 1][c] += 1
 				elif cell_state is PlayerColor.BLUE:
 					new_simple_board[r][c] = 2
-
-
-		
+					# BOARD_N + 1 index holds the num of pieces in the row/col
+	 				# increase row and col counter by 1 for each piece
+					new_simple_board[r][BOARD_N + 1] += 1
+					new_simple_board[BOARD_N + 1][c] += 1
 		return new_simple_board
 	
-	def simple_to_board(
-		self
+
+	# Function should take a placement, and update the boards row and col 12
+	# to hold the corrent nums for tiles in given rows and cols
+	def increment_rowcol_piece_counter(
+		
 	):
-		#some implementation
+		
+		# Psuedo
+  
+		"""
+		for tile_coord in Placement
+			self.board[tile_coord.r][BOARD_N + 1] += 1
+			self.board[BOARD_N + 1][tile_coord.c] += 1
+		"""
 		return 0
+
+def v1_minimax_eval(
+	simple_board:Simple_Board		
+) -> float:
+
+	# Some function adding opp branching factor + ratio of redvsblue tiles
+	
+	return 0
