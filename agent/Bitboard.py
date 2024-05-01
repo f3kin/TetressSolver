@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from referee.game.constants import BOARD_N
 from referee.game.player import PlayerColor
 from referee.game.coord import Coord
-import numpy as np	
-
 class Bitboard:
 
 	def __init__(
@@ -13,6 +11,7 @@ class Bitboard:
 	):
 		self.red_board = 0
 		self.blue_board = 0
+		self.full_mask = (1 << BOARD_N) - 1 # Used for clearing rows/cols
 		
 		# Size of the board, 121 bits
 		self.total_bits = BOARD_N * BOARD_N
@@ -122,27 +121,31 @@ class Bitboard:
 	def check_clear_filled_rowcol(
 		self
 	):
+		# New bitboard with 1 for occupied tiles and 0 for empty
+		full_board = self.red_board | self.blue_board
 		rows_to_clear = []
 		cols_to_clear = []
-		
-		# Find rows/cols that are filled. Check both red and blue board, and 
-		# use bitwise OR to find if the whole row/col is filled
+
+		# Check each row to see if it is full. If it is, append that mask
 		for i in range(BOARD_N):
-			if np.all(self.red_board[i, :] | self.blue_board[i, :]):
-				rows_to_clear.append(i)
+			row_mask = self.full_mask << (i * BOARD_N)
+			if (full_board & row_mask) == row_mask:
+				rows_to_clear.append(row_mask)
 
+		# Check each col to see if it is full. More difficult because a full col
+		# spans over all 11 rows. If full, append mask
 		for j in range(BOARD_N):
-			if np.all(self.red_board[:, j] | self.blue_board[:, j]):
-				cols_to_clear.append(j)
-		
-		# Set all values in a row/col to 0
-		for i in rows_to_clear:
-			self.red_board[i, :] = 0
-			self.blue_board[i, :] = 0
+			col_mask = 0
+			for k in range(BOARD_N):
+				col_mask |= (1 << (j + k * BOARD_N))
+			if (full_board & col_mask) == col_mask:
+				cols_to_clear.append(col_mask)
 
-		for j in cols_to_clear:
-			self.red_board[:, j] = 0
-			self.blue_board[:, j] = 0
+		# A mask means that some row/col is full. For each mask, use that mask
+		# to change the value of each bit in the row/col to 0
+		for mask in rows_to_clear + cols_to_clear:
+			self.red_board &= ~mask
+			self.blue_board &= ~mask
 
 	"""
 	Input:
@@ -154,5 +157,35 @@ class Bitboard:
 	def bitboard_display(
 		self
 	): 
-		board_display = np.where(self.red_board, 'R', np.where(self.blue_board, 'B', '.'))
-		print("\n".join(" ".join(row) for row in board_display))
+
+		for i in range(BOARD_N ** 2):
+			if self.red_board & (1 << i): # On bit in the red board
+				print('R', end='')
+			elif self.blue_board & (1 << i): # On bit in the blue board
+				print('B', end='')
+			else: # No on bit for current index 
+				print('.', end='')
+			if (i + 1) % BOARD_N == 0:
+				print()
+	"""
+	Input:
+		`bitboard` - A bitboard, either red or blue
+		
+	Output: Returns an int corresponding to the number of filled tiles in a 
+		bitboard
+		
+	Desc: Uses Brian Kernighan's algorithm to count bits in a bitboard.
+	Kernighan's algorithm:
+	https://yuminlee2.medium.com/brian-kernighans-algorithm-count-set-bits-in-a-number-18ab05edca93#:~:text=The%20idea%20is%20to%20subtract,be%20the%20set%20bit%20count.
+	"""
+	def count_tiles(
+		self,
+		bitboard
+	) -> int:
+		
+		count = 0
+		while bitboard:
+			bitboard &= bitboard - 1
+			count += 1
+
+		return count
