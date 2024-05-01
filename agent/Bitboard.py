@@ -189,3 +189,35 @@ class Bitboard:
 			count += 1
 
 		return count
+	
+	"""
+	Input:
+		`colour` - A PlayerColor depending on which players turn it is
+	Output: A list of ints
+
+	Desc: Finds all on bits for a given players bitboard. Used to find where
+		a player can place a piece
+		"""
+	def get_colour_indexes(
+		self,
+		colour: PlayerColor
+	) -> list:
+		
+		indexes = []
+
+		# Get the corresponding board of the current player
+		if colour is PlayerColor.RED:
+			temp = self.red_board
+		else:
+			temp = self.blue_board
+
+		# Check the last bit of the temp board. If it is 1, then append the
+		# index. Then move temp right by 1 unit, and increase index
+		index = 0
+		while temp:
+			if temp & 1:
+				indexes.append(index)
+			temp >>= 1
+			index += 1
+			
+		return indexes
