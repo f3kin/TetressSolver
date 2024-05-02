@@ -221,3 +221,84 @@ class Bitboard:
 			index += 1
 			
 		return indexes
+	
+
+
+
+"""
+------------------------------How does the bitboard work?-------------------------------
+A bitboard has two boards, the red_board and blue_board.
+A board is a binary int, where 1's represent a filled tile and 0 is empty.
+
+So the board
+B - R
+R - -
+R - B
+
+would have
+red_board =
+0 0 1
+1 0 0
+1 0 0
+which is
+0 0 1 0 0 1 1 0 0
+because we start on the right hand side and read left
+
+and blue_board =
+1 0 0
+0 0 0
+0 0 1
+which is
+1 0 0 0 0 0 0 0 1
+
+To interact with a cell in the board, we use indexes. The index of a tile can
+be calculated with 
+r * BOARD_N + c
+
+-----------------------------Check if there is something at index-----------------------
+To check if there is a blue or red tile in a square, we use get_tile(index)
+
+get_tile takes the index, say index 3 (4th tile)
+it creates a new binary int 000000001, and then shifts the set bit to the left
+by `index`. So
+1 << index means:
+000000001 left shift 3
+= 000001000
+
+It then takes this 1 << index, and does a bitwise AND with both red and blue boards.
+
+first we check blue board
+blue_board = 100000001
+1 << index = 000001000
+             |||||||||
+			 000000000
+The result is 0, so there is no set bit in blue board at index 3
+
+now we check red_board
+red_board  = 001001100
+1 << index = 000001000
+			 |||||||||
+			 000001000
+The result isn't 0, so there is a set bit in the red board. So we return playercolour.red
+
+If neither board returned true, we would return None to signify no set tiles at the index
+
+
+----------------------------------Placing a tile at an index -----------------------------
+Laptop battery running out.
+Same left shift thing as the check tile, but this time we bitwise OR the two binary ints
+
+So anywhere with a 1 in the original board remains on
+and the new index we are placing with the left shift also turns on in the orignal board.
+We only perform this operation on the board of the colour we input.
+
+Quality of life stuff:
+
+I created a get_index_from_coord function so we dont have to manually calc indexes
+
+There is a print board function too
+
+
+Message me if you need any other help
+
+"""
