@@ -1,4 +1,5 @@
 from Bitboard import Bitboard
+from referee.game.constants import BOARD_N
 
 # Utility functions for minimax.
 # Idea is to have multiple versions of the utility functions, then we can 
@@ -101,10 +102,46 @@ Factors Considered:
 
 Notes:
 The max amount of rows/cols filled is 11. The more the number, the greater
-resistance to being completely wiped out by row/col deletion
+resistance to being completely wiped out by row/col deletion.
+
+Big note: This is a greedy approach and not actually an optimal solution. It
+turns out that this is basically a 'minimal cover' problem, which is 
+NP-Complete. Will be too inefficient to calculate the exact amount, so we will
+just approximate
 """
-def v6_minimax_util():
-	return 0
+def v6_minimax_util(
+	bitboard: Bitboard,
+	is_blue_turn: bool
+) -> int:
+
+	# Pick the board depending on the player
+	if is_blue_turn:
+		board = bitboard.blue_board
+	else:
+		board = bitboard.red_board
+
+	rows_needed = set()
+	cols_needed = set()
+
+	# Check if there is at least 1 set bit in each row
+	for row in range(BOARD_N):
+		row_mask = ((1 << BOARD_N) - 1) << (row * BOARD_N)
+		if board & row_mask != 0:
+			rows_needed.add(row)
+
+	# Check if there is at least 1 set bit in each column
+	for col in range(BOARD_N):
+		col_mask = 0
+		for row in range(BOARD_N):
+			col_mask |= (1 << (row * BOARD_N + col))
+		if board & col_mask != 0:
+			cols_needed.add(col)
+
+	min_clears_needed = min(len(rows_needed), len(cols_needed))
+
+	return min_clears_needed
+
+	
 
 
 
