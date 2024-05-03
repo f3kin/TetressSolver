@@ -12,6 +12,7 @@ from referee.game.constants import BOARD_N
 """
 Minimax utility function - 1
 
+
 Factors Considered:
 	- Red vs Blue Ratio
 
