@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from referee.game.constants import BOARD_N
 from referee.game.player import PlayerColor
 from referee.game.coord import Coord
+from referee.game.pieces import PieceType, _TEMPLATES
 class Bitboard:
 
 	def __init__(
@@ -221,8 +222,6 @@ class Bitboard:
 			index += 1
 			
 		return indexes
-	
-
 
 
 """
