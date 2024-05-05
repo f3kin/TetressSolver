@@ -95,22 +95,8 @@ class Bitboard:
 		new_board.red_board = self.red_board
 		new_board.blue_board = self.blue_board
 		return new_board
-	
-	"""
-	Input: 
-		`coord` - A Coord tpye, with row,column
-		
-	Output: An int representing a tile in the board
-	
-	Desc: Quality of life functin to convert a Coord to a tile in the bitboard.
-		Useful as the PlaceActions from the referee are still in Coord type
-	"""
-	def get_index_from_coord(
-		coord: Coord
-	) -> int:
-		return coord.r * BOARD_N + coord.c
 
-	
+
 	"""
 	Input:
 		
@@ -223,6 +209,49 @@ class Bitboard:
 			
 		return indexes
 
+
+	"""
+	Input:
+		`c1,c2,c3,c1` - Coords in a grid, assuming already wrapped
+		
+	Output: No output, but modifies the board
+	
+	Desc: Takes 4 coordinates which have already been wrapped, and converts 
+		them to indexes, before placing them on the players board.
+	"""
+	def place_four_tiles(
+		self,
+		colour: PlayerColor,
+		c1: Coord,
+		c2: Coord,
+		c3: Coord,
+		c4: Coord
+	):
+		# Take all 4 coords, convert them to indexes
+		index1 = get_index_from_coord(c1)
+		index2 = get_index_from_coord(c2)
+		index3 = get_index_from_coord(c3)
+		index4 = get_index_from_coord(c4)
+
+		# Call set_tile 4 times with the 4 different indexes	
+		self.set_tile(index1, colour)
+		self.set_tile(index2, colour)
+		self.set_tile(index3, colour)
+		self.set_tile(index4, colour)
+
+"""
+Input: 
+	`coord` - A Coord tpye, with row,column
+	
+Output: An int representing a tile in the board
+
+Desc: Quality of life functin to convert a Coord to a tile in the bitboard.
+	Useful as the PlaceActions from the referee are still in Coord type
+"""
+def get_index_from_coord(
+	coord: Coord
+) -> int:
+	return coord.r * BOARD_N + coord.c
 
 """
 ------------------------------How does the bitboard work?-------------------------------
