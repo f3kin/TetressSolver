@@ -101,14 +101,16 @@ def search(board, color):
 
 def minimax(board, color, depth, alpha, beta, maximizingPlayer , past = {}):
     if cutoff_test(board, depth):
-        return evaluation(board, color), None
+        return None #, evaluation(board, color), 
     #TODO: make this more efficient through hashing, won't work otherwise
     #if board in past:
         #return past[board]
     if maximizingPlayer:
-        return max_value(board, color, depth, alpha, beta, past)
+        move, score = max_value(board, color, depth, alpha, beta, past)
+        return move
     else:
-        return min_value(board, color, depth, alpha, beta, past)
+        move, score = min_value(board, color, depth, alpha, beta, past)
+        return move
 
 def max_value(board, color, depth, alpha, beta, past):
     maxEval = float('-inf')
