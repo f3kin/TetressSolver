@@ -90,9 +90,11 @@ class Agent:
         # to update your agent's internal game state representation.
         print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
-<<<<<<< HEAD
 
-###### General Expansion logic ######
+
+
+
+###### General Expansion logic (FROM EXPANSION BRANCH) ######
 # Uses Nic's board format
 def expand(board, color):
     moves = []
@@ -228,7 +230,14 @@ def UCS_expand(board, square):
     return visited
 '''
 
-###### Functions specific to Minimax #####
+
+
+
+
+
+
+
+###### Functions specific to Minimax Branch #####
 
 #TODO: develop a better way of saving + storing child nodes, use acutal board type
 class Move:
@@ -305,11 +314,6 @@ def endgame_search(board, color):
                     Coord(4, 3), 
                     Coord(4, 4)
                 )
-
-def expand(board, colour):
-    #TODO: Implement me from other branch
-
-    return board
 
 #Simply checks if the game is over
 def finished(board):
