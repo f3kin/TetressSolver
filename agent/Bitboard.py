@@ -209,18 +209,22 @@ class Bitboard:
 			
 		return indexes
 
+
+	"""
+	Input:
+		`tile_indexes` - A list of indexes representing the turned on bits in
+			one of the bitboards
+	Output: A set containing all the empty adjacent tiles to the tiles passed
+		into the function
+	Desc: Takes a list of indexes which represent where tiles are filled in one
+		of the boards. No colour specifics here. If red is using this function, 
+		we will be inputting reds tile indexes, and thus receive the adjacent
+		tiles. Same goes for blue
+	"""
 	def get_adjacent_squares(
 		self,
-		colour: PlayerColor,
 		tile_indexes: list[int]
-	) -> list[int]:
-		
-		if colour is PlayerColor.RED:
-			temp = self.red_board
-			opp = self.blue_board
-		else:
-			temp = self.blue_board
-			opp = self.red_board
+	) -> set[int]:
 		
 		empty_adjacent_tiles = set()
 
@@ -257,10 +261,7 @@ class Bitboard:
 			if self.get_tile(below_index) is None:
 				empty_adjacent_tiles.add(below_index)
 
-
-
-
-		return 0
+		return empty_adjacent_tiles
 
 	"""
 	Input:

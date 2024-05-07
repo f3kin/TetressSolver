@@ -11,6 +11,7 @@ MIN_TURN = 1
 DEPTH_VALUE = 3
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
+from Bitboard import Bitboard
 
 
 class Agent:
@@ -24,25 +25,45 @@ class Agent:
         Any setup and/or precomputation should be done here.
         """
         # TODO: IMPLEMENT PRECOMPUTATION HERE
+        self.board = Bitboard()
         self._color = color
         self.num_moves = 0
         self.state = OPENING
-        self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
-                    Coord(3, 3), 
-                    Coord(3, 4), 
-                    Coord(4, 3), 
-                    Coord(4, 4)
-                ), PlaceAction(
-                    Coord(3, 3), 
-                    Coord(3, 4), 
-                    Coord(4, 3), 
-                    Coord(4, 4)
-                ), PlaceAction(
-                    Coord(3, 3), 
-                    Coord(3, 4), 
-                    Coord(4, 3), 
-                    Coord(4, 4)
-                )]
+        if self._color is PlayerColor.RED:
+            # Create these book moves. Try and place these moves on first 3 turns. If no moves can be made, then need to do normal search
+            self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
+                        Coord(0, 0), 
+                        Coord(1, 0), 
+                        Coord(2, 0), 
+                        Coord(3, 0)
+                    ), PlaceAction(
+                        Coord(3, 1), 
+                        Coord(4, 1), 
+                        Coord(5, 1), 
+                        Coord(6, 1)
+                    ), PlaceAction(
+                        Coord(6, 2), 
+                        Coord(7, 2), 
+                        Coord(8, 2), 
+                        Coord(9, 2)
+                    )]
+        else:
+            self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
+                        Coord(0, 10), 
+                        Coord(1, 10), 
+                        Coord(2, 10), 
+                        Coord(3, 10)
+                    ), PlaceAction(
+                        Coord(3, 9), 
+                        Coord(4, 9), 
+                        Coord(5, 9), 
+                        Coord(6, 9)
+                    ), PlaceAction(
+                        Coord(6, 8), 
+                        Coord(7, 8), 
+                        Coord(8, 8), 
+                        Coord(9, 8)
+                    )]
         match color:
             case PlayerColor.RED:
                 print("Testing: I am playing as RED")
@@ -55,10 +76,6 @@ class Agent:
         to take an action. It must always return an action object. 
         """
 
-        # Below we have hardcoded two actions to be played depending on whether
-        # the agent is playing as BLUE or RED. Obviously this won't work beyond
-        # the initial moves of the game, so you should use some game playing
-        # technique(s) to determine the best action to take.
         #TODO: PUT ACTION CHOOSING LOGIC
         if (self.num_moves > 3): #TODO: Make this state logic more complex
             if (self.num_moves > 140):
@@ -71,7 +88,7 @@ class Agent:
             case MID_GAME:
                 return search(board, self._color)
             case END_GAME:
-                return esearch(board, self._color)
+                return search(board, self._color)
 
 
 
@@ -124,7 +141,6 @@ def dfs_expand(board,start_square, visited, moves, steps):
 def expandable(board, square):
     #TODO: Implement
     return True
-
 #Given Start coord, end coord travel to form a move with dfs
 def dfs_travel(board, start_square, end_square, path, visited, steps):
     if steps == 5:
@@ -188,8 +204,6 @@ def calculate_diamond(square, end_squares):
             
 
             
-
-### Currently not being called ###
 
 def UCS_expand(board, square):
     #TODO: test this by displaying the children printed and showing duplicates etc.
