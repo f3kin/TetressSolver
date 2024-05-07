@@ -263,6 +263,51 @@ class Bitboard:
 
 		return empty_adjacent_tiles
 
+	def move_adj(
+		index: int,
+		move: str
+	) -> int:
+		
+		# Calc 'row' and 'col' or given index
+		row = index // BOARD_N
+		col = index % BOARD_N
+
+		if move == "right":
+			# In case where index is on right most column, col 10
+			if col == (BOARD_N - 1):
+				new_index = row * BOARD_N
+			# In case where not in the 10th col
+			else:
+				new_index = index + 1
+		
+		elif move == "left":
+			# In case where index is on left most column, col 0
+			if col == 0:
+				new_index = row * BOARD_N + (BOARD_N - 1)
+			# In case were index is not in the 0th col
+			else:
+				new_index = index - 1
+			
+		elif move == "down":
+			# In case where index is on bottom row, 10th row
+			if index + BOARD_N >= (BOARD_N **2):
+				new_index = (index + BOARD_N) % BOARD_N
+			# In case were index is not in the 10th row
+			else:
+				new_index + index + BOARD_N
+
+		elif move == "up":
+			# In case where index is on the top row, the 0th row
+			if index < BOARD_N:
+				new_index = (BOARD_N ** 2) - (BOARD_N - index)
+			# In case where index is not on the 0th row
+			else:
+				new_index = index - BOARD_N
+
+		return new_index
+
+
+
 	"""
 	Input:
 		`c1,c2,c3,c1` - Coords in a grid, assuming already wrapped
