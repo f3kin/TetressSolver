@@ -113,21 +113,31 @@ class Agent:
 
 ###### General Expansion logic (FROM EXPANSION BRANCH) ######
 
-def expand(board, color):
-    #TODO: Bitboard - change color (what colour we're playing as), board to our rep
+def expand(
+        board: Bitboard,
+        color
+    ):
+    
     moves = []
-    for square in board: #TODO: Bitboard - find all red squares in the board
-        if (board[square] == color) & expandable(board, square): 
-            visited = {square}  
-            square_expand(board, square, visited, moves, 0) 
+
+    # player_tiles is the list of indexes corresponding to the players tile
+    if color is PlayerColor.RED:
+        player_tiles = board.get_colour_indexes(PlayerColor.RED)
+    else:
+        player_tiles = board.get_colour_indexes(PlayerColor.BLUE)
+        
+    # For each tile, expand it
+    for index in player_tiles:
+        visited = {index}  
+        square_expand(board, index, visited, moves, 0) 
     return list(moves)
 
 # Expand from a single square
-def square_expand(board, start_square, visited, moves, steps):
-    return dfs_expand(board, start_square, visited, moves, steps)
+def square_expand(board, start_index, visited, moves, steps):
+    return dfs_expand(board, start_index, visited, moves, steps)
 
 
-def dfs_expand(board,start_square, visited, moves, steps):
+def dfs_expand(board, start_square, visited, moves, steps):
     end_squares = []
     calculate_diamond(start_square, end_squares) #TODO: Bitboard - Generate outer squares of diamond bitboard style
     #TODO: Finlay - Add adjacent red square checking, fix diamond interior
