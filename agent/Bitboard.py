@@ -188,7 +188,7 @@ class Bitboard:
 	def get_colour_indexes(
 		self,
 		colour: PlayerColor
-	) -> list:
+	) -> list[int]:
 		
 		indexes = []
 
@@ -209,6 +209,58 @@ class Bitboard:
 			
 		return indexes
 
+	def get_adjacent_squares(
+		self,
+		colour: PlayerColor,
+		tile_indexes: list[int]
+	) -> list[int]:
+		
+		if colour is PlayerColor.RED:
+			temp = self.red_board
+			opp = self.blue_board
+		else:
+			temp = self.blue_board
+			opp = self.red_board
+		
+		empty_adjacent_tiles = set()
+
+		for index in tile_indexes:
+
+			# Get left adjacent index
+			offset = -1
+			if (index % 3 == 0):
+				offset = (BOARD_N -1)
+			left_index = index + offset
+			if self.get_tile(left_index) is None:
+				empty_adjacent_tiles.add(left_index)
+
+			# Get right adjacent index
+			offset = 1
+			if ((index + 1) % 3 == 0):
+				offset = -(BOARD_N - 1)
+			right_index = index + offset
+			if self.get_tile(right_index) is None:
+				empty_adjacent_tiles.add(right_index)
+
+			# Get above adjacent index
+			above_index = index - BOARD_N
+			if (above_index < 0):
+				above_index = BOARD_N**2 + above_index
+			if self.get_tile(above_index) is None:
+				empty_adjacent_tiles.add(above_index)
+
+
+			# Get below adajcent index
+			below_index = index + BOARD_N
+			if (below_index >= BOARD_N**2):
+				below_index = below_index - BOARD_N**2
+			if self.get_tile(below_index) is None:
+				empty_adjacent_tiles.add(below_index)
+
+
+
+
+		return 0
 
 	"""
 	Input:
