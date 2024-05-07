@@ -71,7 +71,7 @@ class Agent:
             case MID_GAME:
                 return search(board, self._color)
             case END_GAME:
-                return endgame_search(board, self._color)
+                return esearch(board, self._color)
 
 
 
@@ -95,57 +95,47 @@ class Agent:
 
 
 ###### General Expansion logic (FROM EXPANSION BRANCH) ######
-# Uses Nic's board format
+
 def expand(board, color):
+    #TODO: Bitboard - change color (what colour we're playing as), board to our rep
     moves = []
-    #TODO: modify color_val based on input color, Nic's colour rep
-    for square in board:
-        if (board[square] == color) & expandable(board, square): #It is one of our colour squares
-            visited = {square}  # Initialize visited set with the start square
-            square_expand(board, square, visited, moves, 0)  # Perform DFS from the start square
+    for square in board: #TODO: Bitboard - find all red squares in the board
+        if (board[square] == color) & expandable(board, square): 
+            visited = {square}  
+            square_expand(board, square, visited, moves, 0) 
     return list(moves)
 
 # Expand from a single square
 def square_expand(board, start_square, visited, moves, steps):
-    #Initial diamond expanding logic
     return dfs_expand(board, start_square, visited, moves, steps)
 
 
 def dfs_expand(board,start_square, visited, moves, steps):
-    #print("start square:")
-    #print(start_square)
-    # Base case: stop exploring if we've reached the maximum number of steps
-    # Store the squares visited 
-    # End squares - squares at the edge of the diamond
     end_squares = []
-    calculate_diamond(start_square, end_squares)
-    #TODO: Add adjacent red square checking
+    calculate_diamond(start_square, end_squares) #TODO: Bitboard - Generate outer squares of diamond bitboard style
+    #TODO: Finlay - Add adjacent red square checking, fix diamond interior
     for end_square in end_squares:
         visited = set()
         visited.add(start_square)
         path = []
-        result = dfs_travel(board, start_square, end_square, path, visited, steps) #TODO: get this returning stuff right
-        # print(start_square)
-        # print(result[1::])
-        # print(end_square)
-        # print("\n")
+        result = dfs_travel(board, start_square, end_square, path, visited, steps) 
         moves.append(result)
 
 def expandable(board, square):
     #TODO: Implement
     return True
 
+#Given Start coord, end coord travel to form a move with dfs
 def dfs_travel(board, start_square, end_square, path, visited, steps):
-    # Base case: if the current square is the end square, return the path
     if steps == 5:
         return None
     if start_square == end_square:
         return path + [end_square]
     
-    # Calculate the distance from the current square to the end square
-    distance_to_end = abs(end_square.r - start_square.r) + abs(end_square.c - start_square.c)
+    distance_to_end = abs(end_square.r - start_square.r) + abs(end_square.c - start_square.c) #TODO: Bitboard - manhattan distance between two points
     
     # Define possible directions (up, down, right, left) prioritized based on proximity to the end square
+    #TODO: Bitboard - define these numerically
     directions = [
         (1, 0),  # Down
         (0, 1),  # Right
@@ -153,6 +143,7 @@ def dfs_travel(board, start_square, end_square, path, visited, steps):
         (0, -1)  # Left
     ]
     
+    #TODO: Bitboard - HARD, change the following logic into bitboard 
     # Sort directions based on their proximity to the end square
     directions.sort(key=lambda d: abs((start_square.r + d[0]) - end_square.r) + abs((start_square.c + d[1]) - end_square.c))
     # Explore all possible directions from the current square
@@ -180,7 +171,6 @@ def dfs_travel(board, start_square, end_square, path, visited, steps):
 
 
 def calculate_diamond(square, end_squares):
-    #Seems to work now
     directions = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
     # Initialize curr_square with the initial square
     curr_square = Coord(square.r, square.c + 4)
@@ -199,7 +189,8 @@ def calculate_diamond(square, end_squares):
 
             
 
-'''
+### Currently not being called ###
+
 def UCS_expand(board, square):
     #TODO: test this by displaying the children printed and showing duplicates etc.
     # Directions for moving up, down, left, right
@@ -228,9 +219,6 @@ def UCS_expand(board, square):
                         frontier.put((cost + 1, next_position))
 
     return visited
-'''
-
-
 
 
 
