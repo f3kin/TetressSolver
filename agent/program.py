@@ -119,11 +119,22 @@ class Agent:
 
 ###### General Expansion logic (FROM EXPANSION BRANCH) ######
 
+"""
+Input: 
+    `board` - A bitboard
+    `color` - The color of the player calling
+
+Output: A list of all possible children (after placing 1 tetromino) of a board
+
+Desc: Takes a board and color, finds the tiles on the board of that color, and
+    performs the tile expansion from each one
+"""
 def expand(
         board: Bitboard,
         color: PlayerColor
-    ):
-    moves = []
+    ) -> set[Bitboard]:
+
+    moves = set()
 
     # player_tiles is the list of indexes corresponding to the players tile
     if color is PlayerColor.RED:
@@ -133,8 +144,8 @@ def expand(
         
     # For each tile, expand it
     for index in player_tiles:
-        visited = {index}  
-        moves.extend(init_expand_from_tile(board, index, color))
+        visited = {index}  # Add back in the set functionality
+        moves.update(init_expand_from_tile(board, index, color))
     return moves
 
 # Expand from a single square
@@ -265,32 +276,77 @@ Desc: Takes a board and the index of a given tile of the calling players, and
 #    return visited
 
 
+
+
+"""
+Input:
+    `board` - A bitboard
+    `index` - An int, relating to one of the boards tiles
+    `player_colour` - The PlayerColour type of the current agent
+    `depth` - In 0-4. Represents the number of tiles placed 
+    `current_shape` - The current formation of tiles placed in the expand.
+                      Will either be a full shape (at depth 4), or partial
+                      shape (at depths 1-3)
+    `all_shapes` - The set of shapes created by the expanding. Only full shapes
+
+Output: No output, but modifies the all_shapes set
+
+Desc: Takes an index, and starts expanding outwards in all directions. Adds 
+      searches of depth 4 to the all_shapes set and returns it
+      So the return of this function contains all possible board configs after
+      expanding from 1 of the players tiles
+
+"""
 def expand_out_sexy_style(
     board: Bitboard,
     index: int,
     player_colour: PlayerColor,
     depth: int,
-    current_shape,
-    all_shapes
+    current_shape: Bitboard, 
+    all_shapes: set[Bitboard]
 ):
     
+    # Add all of the boards of depth 4 and return
     if depth == 4:
-        all_shapes.append(current_shape[:])
+        all_shapes.add(current_shape[:])
         return
     
-    # Convert to a set as to remove duplicates
+
     for direction in DIRECTIONS:
+
+        # Move out 1 in each direction from the given index to get new index
         new_index = board.move_adj(index, direction)
+
+        # If new_index is empty, we set the tile, update the shape, copy the
+        # board to get a new board, then clean up the original board
         if board.get_tile(new_index) is None:
             board.set_tile(new_index, player_colour)
             new_shape = current_shape + [new_index]
             expand_out_sexy_style(board.copy(), new_index, player_colour, depth + 1, new_shape, all_shapes)
             board.clear_tile(new_index)
 
-def init_expand_from_tile(board, start_index, player_colour):
+
+
+"""
+Inputs:
+    `board`
+    `start_index`
+    `player_colour`
+    
+Output: Returns all possible shapes made expanding from one tile
+
+Desc: Function will be called on each of the players tiles in the 'expand'
+    function. Called onces for each of the tiles. At the end, all possible
+    children boards from a given board will exist.
+"""
+def init_expand_from_tile(
+    board: Bitboard, 
+    start_index: int,
+    player_colour: PlayerColor
+) -> set[Bitboard]:
 
     # Will have repeats, need to convert to a set
-    all_shapes = []
+    all_shapes = set()
     expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes)
     return all_shapes
         
