@@ -148,11 +148,11 @@ class Bitboard:
 
 		for i in range(BOARD_N ** 2):
 			if self.red_board & (1 << i): # On bit in the red board
-				print('R', end='')
+				print('R', end=' ')
 			elif self.blue_board & (1 << i): # On bit in the blue board
-				print('B', end='')
+				print('B', end=' ')
 			else: # No on bit for current index 
-				print('.', end='')
+				print('.', end=' ')
 			if (i + 1) % BOARD_N == 0:
 				print()
 	"""
@@ -339,6 +339,11 @@ class Bitboard:
 		self.set_tile(index3, colour)
 		self.set_tile(index4, colour)
 
+	def get_hash(
+		self
+	):
+		return hash((self.red_board, self.blue_board))
+
 """
 Input: 
 	`coord` - A Coord tpye, with row,column
@@ -354,21 +359,21 @@ def get_index_from_coord(
 	return coord.r * BOARD_N + coord.c
 
 
-def Bitboard_to_OG(
-	board: Bitboard
-) -> Board:
-	result = Board()
-	for i in range(BOARD_N ** 2):
-		if board.red_board & (1 << i): # On bit in the red board
-			row = i//11
-			col = i % 11
-			result[(row,col)] == PlayerColor.RED
-		elif self.blue_board & (1 << i): # On bit in the blue board
-			row = i//11
-			col = i % 11
-			result[(row,col)] == PlayerColor.Blue
+#def Bitboard_to_OG(
+#	board: Bitboard
+#) -> Board:
+#	result = Board()
+#	for i in range(BOARD_N ** 2):
+#		if board.red_board & (1 << i): # On bit in the red board
+#			row = i//11
+#			col = i % 11
+#			result[(row,col)] == PlayerColor.RED
+#		elif self.blue_board & (1 << i): # On bit in the blue board
+#			row = i//11
+#			col = i % 11
+#			result[(row,col)] == PlayerColor.Blue
 
-	return result
+#	return result
 
 
 """

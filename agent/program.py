@@ -4,7 +4,7 @@
 import queue
 
 MID_GAME = 75
-OPENING = 3
+OPENING = 1 # TODO Change this to another value
 END_GAME = 3
 MAX_TURN = 0
 MIN_TURN = 1
@@ -29,7 +29,6 @@ class Agent:
         # TODO: IMPLEMENT PRECOMPUTATION HERE
         self.board = Bitboard()
         self._color = color
-        print(type(color))
         self.num_moves = -1
         self.state = OPENING
         if self._color is PlayerColor.RED:
@@ -82,8 +81,13 @@ class Agent:
         if self.num_moves < OPENING:
             return self.book_moves[self.num_moves]
         else:
-            return search(self.board, self._color) # How do we get a placeAction from search?
-        
+
+            # Current children holds all children of board to a depth of 1, placing one tile. There is 118 children, maybe right?
+            childen = search(self.board, self._color) # How do we get a placeAction from search?
+            
+            
+            
+            return 0
 
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
@@ -128,37 +132,27 @@ def expand(
     ) -> list[Bitboard]:
 
     moves = []
-    print("\n\n\n")
-    print(color)
+
     # player_tiles is the list of indexes corresponding to the players tile
     if color == PlayerColor.RED:
         player_tiles = board.get_colour_indexes(PlayerColor.RED)
-        print("\n")
-        print("\n")
-        print("\n")
-        print(player_tiles)
-        print("\n")
-        print("\n")
-        print("\n")
     else:
         player_tiles = board.get_colour_indexes(PlayerColor.BLUE)
         
     # For each tile, expand it
     for index in player_tiles:
         visited = {index}  # Add back in the set functionality
-        moves += [i for i in init_expand_from_tile(board, index, color)]
-    print("\n")
-    print("\n")
-    print("\n")
-    print(len(moves))
-    print("\n")
-    print("\n")
-    print("\n")
-    for value in moves:
-        # Print all boards with move
-        print(type(value))
-        #value.bitboard_display()
-    return
+        all_index_placements = init_expand_from_tile(board, index, color)
+        moves.extend(all_index_placements)
+    
+
+    #for value in moves:
+    #    # Print all boards with move
+        
+    #    value.bitboard_display()
+    #    print("\n\n")
+
+    return moves
 
 
 """
@@ -185,17 +179,21 @@ def expand_out_sexy_style(
     index: int,
     player_colour: PlayerColor,
     depth: int,
-    current_shape: Bitboard, 
-    all_shapes: list[Bitboard]
+    current_shape: list[int], 
+    all_shapes: list[Bitboard],
+    seen_hashes: set
 ):
-    
     # Add all of the boards of depth 4 and return
-    if depth == 4:
-        new_board = board.copy()
-        for i in range(4):
-            new_board.set_tile(current_shape[i], player_colour)
-        new_board.bitboard_display()
-        all_shapes.append(new_board)
+    if depth == 5:
+        print(current_shape)
+        #new_board = board.copy()
+        #for i in range(4):
+        #    new_board.set_tile(current_shape[i], player_colour)
+        ##new_board.bitboard_display()
+        board_hash = board.get_hash()
+        if board_hash not in seen_hashes:
+            seen_hashes.add(board_hash)
+            all_shapes.append(board)
         return
     
 
@@ -206,12 +204,12 @@ def expand_out_sexy_style(
 
         # If new_index is empty, we set the tile, update the shape, copy the
         # board to get a new board, then clean up the original board
-        if board.get_tile(new_index) is None:
+        if board.get_tile(new_index) is None and new_index not in current_shape:
 
             new_board = board.copy()
             new_board.set_tile(new_index, player_colour)
             new_shape = current_shape + [new_index]
-            expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes)
+            expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes, seen_hashes)
 
 
 
@@ -234,10 +232,11 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     # Will have repeats, need to convert to a set
+    seen_hashes = set()
     all_shapes = []
-    expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes)
-    print(all_shapes)
-    return all_shapes
+    expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
+    #print(all_shapes)
+    return all_shapes[1::]
         
     
 
