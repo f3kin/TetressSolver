@@ -384,12 +384,12 @@ def minimax(
     board: Bitboard, 
     color: PlayerColor, 
     depth: int, 
-    alpha, 
-    beta, 
-    maximizingPlayer, 
+    alpha: float, 
+    beta: float, 
+    maximizingPlayer: bool, 
     past = {}
 ):
-    if cutoff_test(board, depth):
+    if cutoff_test(board, depth):  # Are we at a certain depth
         return None #, evaluation(board, color), 
     #TODO: make this more efficient through hashing, won't work otherwise
     #if board in past:
