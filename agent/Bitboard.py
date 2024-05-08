@@ -5,6 +5,7 @@ from referee.game.constants import BOARD_N
 from referee.game.player import PlayerColor
 from referee.game.coord import Coord
 from referee.game.pieces import PieceType, _TEMPLATES
+from referee.game import board
 class Bitboard:
 
 	def __init__(
@@ -187,13 +188,13 @@ class Bitboard:
 		"""
 	def get_colour_indexes(
 		self,
-		colour: PlayerColor
+		color: PlayerColor
 	) -> list[int]:
 		
 		indexes = []
 
 		# Get the corresponding board of the current player
-		if colour is PlayerColor.RED:
+		if color == PlayerColor.RED:
 			temp = self.red_board
 		else:
 			temp = self.blue_board
@@ -264,6 +265,7 @@ class Bitboard:
 		return empty_adjacent_tiles
 
 	def move_adj(
+			self,
 		index: int,
 		move: str
 	) -> int:
@@ -294,7 +296,7 @@ class Bitboard:
 				new_index = (index + BOARD_N) % BOARD_N
 			# In case were index is not in the 10th row
 			else:
-				new_index + index + BOARD_N
+				new_index = index + BOARD_N
 
 		elif move == "up":
 			# In case where index is on the top row, the 0th row
@@ -350,6 +352,24 @@ def get_index_from_coord(
 	coord: Coord
 ) -> int:
 	return coord.r * BOARD_N + coord.c
+
+
+def Bitboard_to_OG(
+	board: Bitboard
+) -> Board:
+	result = Board()
+	for i in range(BOARD_N ** 2):
+		if board.red_board & (1 << i): # On bit in the red board
+			row = i//11
+			col = i % 11
+			result[(row,col)] == PlayerColor.RED
+		elif self.blue_board & (1 << i): # On bit in the blue board
+			row = i//11
+			col = i % 11
+			result[(row,col)] == PlayerColor.Blue
+
+	return result
+
 
 """
 ------------------------------How does the bitboard work?-------------------------------
