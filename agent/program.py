@@ -320,10 +320,11 @@ def expand_out_sexy_style(
         # If new_index is empty, we set the tile, update the shape, copy the
         # board to get a new board, then clean up the original board
         if board.get_tile(new_index) is None:
-            board.set_tile(new_index, player_colour)
+
+            new_board = board.copy()
+            new_board.set_tile(new_index, player_colour)
             new_shape = current_shape + [new_index]
-            expand_out_sexy_style(board.copy(), new_index, player_colour, depth + 1, new_shape, all_shapes)
-            board.clear_tile(new_index)
+            expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes)
 
 
 
