@@ -4,7 +4,7 @@
 import queue
 
 MID_GAME = 75
-OPENING = 1 # TODO Change this to another value
+OPENING = 3 # TODO Change this to another value
 END_GAME = 3
 MAX_TURN = 0
 MIN_TURN = 1
@@ -84,6 +84,8 @@ class Agent:
 
             # Current children holds all children of board to a depth of 1, placing one tile. There is 118 children, maybe right?
             childen = search(self.board, self._color) # How do we get a placeAction from search?
+
+            # search 
             
             
             
@@ -124,6 +126,8 @@ Desc: Takes a board and color, finds the tiles on the board of that color, and
 """
 
 def search(board, color):
+
+    # Minimax goes here
     return expand(board, color)
 
 def expand(
@@ -151,7 +155,7 @@ def expand(
         
     #    value.bitboard_display()
     #    print("\n\n")
-
+    print(len(moves))
     return moves
 
 
@@ -191,6 +195,10 @@ def expand_out_sexy_style(
         #    new_board.set_tile(current_shape[i], player_colour)
         ##new_board.bitboard_display()
         board_hash = board.get_hash()
+
+        # CHECK FOR ROW/COL CLEARNING
+
+
         if board_hash not in seen_hashes:
             seen_hashes.add(board_hash)
             all_shapes.append(board)
