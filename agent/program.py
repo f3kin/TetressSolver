@@ -292,8 +292,9 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     seen_hashes = set()
-    #all_shapes = []
+    
     all_shapes = iterative_expand(board, start_index, player_colour)
+    #all_shapes = []
     #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
     return all_shapes #[1::]
         
