@@ -5,15 +5,26 @@ from referee.game.constants import BOARD_N
 from referee.game.player import PlayerColor
 from referee.game.coord import Coord
 from referee.game.pieces import PieceType, _TEMPLATES
+from referee.game import board
 class Bitboard:
+
+	# Create 11 row and 11 column masks for clearing rows and columns.
+	# Creates here because they are the same for all board, and saves
+	# computation time when creating new bitboards
+
+	row_masks = [(1 << BOARD_N) - 1 << (i * BOARD_N) for i in range(BOARD_N)]
+	col_masks = [0 for _ in range(BOARD_N)]
+	for j in range(BOARD_N):
+		for k in range(BOARD_N):
+			col_masks[j] |= (1 << (j + k * BOARD_N))
+
 
 	def __init__(
 		self
 	):
 		self.red_board = 0
 		self.blue_board = 0
-		self.full_mask = (1 << BOARD_N) - 1 # Used for clearing rows/cols
-		
+
 		# Size of the board, 121 bits
 		self.total_bits = BOARD_N * BOARD_N
 	
@@ -106,33 +117,43 @@ class Bitboard:
 		they are filled, then it will set all the values back to 0
 	"""
 	def check_clear_filled_rowcol(
-		self
+		self,
+		changed_indexes: list[int]
 	):
-		# New bitboard with 1 for occupied tiles and 0 for empty
+		# Create the full board showing which tiles are filled in
 		full_board = self.red_board | self.blue_board
-		rows_to_clear = []
-		cols_to_clear = []
 
-		# Check each row to see if it is full. If it is, append that mask
-		for i in range(BOARD_N):
-			row_mask = self.full_mask << (i * BOARD_N)
+		combined_masks = 0
+
+		# Find which rows and cols have been affected by the new placement
+		rows_to_check = set(index // BOARD_N for index in changed_indexes)
+		cols_to_check = set(index % BOARD_N for index in changed_indexes)
+
+		# Check to see if affected rows/cols are full
+		for row in rows_to_check:
+
+			row_mask = Bitboard.row_masks[row] # Precomputed row all set bits
+
+			# If row is full in the full board, then add it to the combined
+			# mask we will use to clear rows/cols at the end
 			if (full_board & row_mask) == row_mask:
-				rows_to_clear.append(row_mask)
+				combined_masks |= row_mask
 
-		# Check each col to see if it is full. More difficult because a full col
-		# spans over all 11 rows. If full, append mask
-		for j in range(BOARD_N):
-			col_mask = 0
-			for k in range(BOARD_N):
-				col_mask |= (1 << (j + k * BOARD_N))
+		for col in cols_to_check:
+
+			col_mask = Bitboard.col_masks[col] # Precomputed col all set bits
+
+			# If col is full in the full board, then add it to the combined
+			# mask we will use to clear rows/cols at the end
 			if (full_board & col_mask) == col_mask:
-				cols_to_clear.append(col_mask)
+				combined_masks |= col_mask
 
-		# A mask means that some row/col is full. For each mask, use that mask
-		# to change the value of each bit in the row/col to 0
-		for mask in rows_to_clear + cols_to_clear:
-			self.red_board &= ~mask
-			self.blue_board &= ~mask
+		# 'Overlay' the negative combined mask over the red and blue board,
+		# turning off the bits that need to be cleared
+		# Combined mask will the rows and cols that were full in the fill board
+		# turned on, so it just maps all bits we need to turn off
+		self.red_board &= ~combined_masks
+		self.blue_board &= ~combined_masks
 
 	"""
 	Input:
@@ -147,11 +168,11 @@ class Bitboard:
 
 		for i in range(BOARD_N ** 2):
 			if self.red_board & (1 << i): # On bit in the red board
-				print('R', end='')
+				print('R', end=' ')
 			elif self.blue_board & (1 << i): # On bit in the blue board
-				print('B', end='')
+				print('B', end=' ')
 			else: # No on bit for current index 
-				print('.', end='')
+				print('.', end=' ')
 			if (i + 1) % BOARD_N == 0:
 				print()
 	"""
@@ -187,13 +208,13 @@ class Bitboard:
 		"""
 	def get_colour_indexes(
 		self,
-		colour: PlayerColor
+		color: PlayerColor
 	) -> list[int]:
 		
 		indexes = []
 
 		# Get the corresponding board of the current player
-		if colour is PlayerColor.RED:
+		if color == PlayerColor.RED:
 			temp = self.red_board
 		else:
 			temp = self.blue_board
@@ -264,6 +285,7 @@ class Bitboard:
 		return empty_adjacent_tiles
 
 	def move_adj(
+			self,
 		index: int,
 		move: str
 	) -> int:
@@ -294,7 +316,7 @@ class Bitboard:
 				new_index = (index + BOARD_N) % BOARD_N
 			# In case were index is not in the 10th row
 			else:
-				new_index + index + BOARD_N
+				new_index = index + BOARD_N
 
 		elif move == "up":
 			# In case where index is on the top row, the 0th row
@@ -337,6 +359,11 @@ class Bitboard:
 		self.set_tile(index3, colour)
 		self.set_tile(index4, colour)
 
+	def get_hash(
+		self
+	):
+		return hash((self.red_board, self.blue_board))
+
 """
 Input: 
 	`coord` - A Coord tpye, with row,column
@@ -350,6 +377,24 @@ def get_index_from_coord(
 	coord: Coord
 ) -> int:
 	return coord.r * BOARD_N + coord.c
+
+
+#def Bitboard_to_OG(
+#	board: Bitboard
+#) -> Board:
+#	result = Board()
+#	for i in range(BOARD_N ** 2):
+#		if board.red_board & (1 << i): # On bit in the red board
+#			row = i//11
+#			col = i % 11
+#			result[(row,col)] == PlayerColor.RED
+#		elif self.blue_board & (1 << i): # On bit in the blue board
+#			row = i//11
+#			col = i % 11
+#			result[(row,col)] == PlayerColor.Blue
+
+#	return result
+
 
 """
 ------------------------------How does the bitboard work?-------------------------------
