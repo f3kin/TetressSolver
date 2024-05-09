@@ -1,7 +1,9 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
-import queue
+
+# Depends entirely on if we can use deque
+from collections import deque
 from typing import Tuple, Optional
 
 
@@ -21,6 +23,8 @@ so create that child first. This will save a lot of time in alpha, beta pruning
 
 We also really need to think about killer moves, book moves (during whole game
 eg moves you always make, like a checkmate in chess).
+
+
 
 """
 
@@ -235,6 +239,40 @@ def expand_out_sexy_style(
             new_shape = current_shape + [new_index]
             expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes, seen_hashes)
 
+def iterative_expand(
+    board: Bitboard, 
+    index: int, 
+    player_colour: PlayerColor
+):
+
+    queue = deque([(board, index, [index], 1)])
+    all_shapes = []
+    seen_hashes = set()
+
+    while queue:
+        current_board, current_index, shape, depth = queue.popleft()
+
+        if depth == 5:
+
+            current_board.check_clear_filled_rowcol(shape)
+            board_hash = current_board.get_hash()
+            if board_hash not in seen_hashes:
+                seen_hashes.add(board_hash)
+                all_shapes.append((current_board.copy(), shape[1:]))
+            continue
+
+        for direction in DIRECTIONS:
+            new_index = current_board.move_adj(current_index, direction)
+            if current_board.get_tile(new_index) is None and new_index not in shape:
+                current_board.set_tile(new_index, player_colour)
+                new_shape = shape + [new_index]
+                queue.append((current_board, new_index, new_shape, depth + 1))
+                current_board.clear_tile(new_index)
+
+    return all_shapes
+
+
+
 """
 Inputs:
     `board`
@@ -254,8 +292,8 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     seen_hashes = set()
-    all_shapes = []
-    expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
+    all_shapes = iterative_expand(board, start_index, player_colour)
+    #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
     return all_shapes #[1::]
         
 
