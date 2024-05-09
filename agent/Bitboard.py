@@ -5,6 +5,7 @@ from referee.game.constants import BOARD_N
 from referee.game.player import PlayerColor
 from referee.game.coord import Coord
 from referee.game.pieces import PieceType, _TEMPLATES
+from referee.game import board
 class Bitboard:
 
 	def __init__(
@@ -95,22 +96,8 @@ class Bitboard:
 		new_board.red_board = self.red_board
 		new_board.blue_board = self.blue_board
 		return new_board
-	
-	"""
-	Input: 
-		`coord` - A Coord tpye, with row,column
-		
-	Output: An int representing a tile in the board
-	
-	Desc: Quality of life functin to convert a Coord to a tile in the bitboard.
-		Useful as the PlaceActions from the referee are still in Coord type
-	"""
-	def get_index_from_coord(
-		coord: Coord
-	) -> int:
-		return coord.r * BOARD_N + coord.c
 
-	
+
 	"""
 	Input:
 		
@@ -161,11 +148,11 @@ class Bitboard:
 
 		for i in range(BOARD_N ** 2):
 			if self.red_board & (1 << i): # On bit in the red board
-				print('R', end='')
+				print('R', end=' ')
 			elif self.blue_board & (1 << i): # On bit in the blue board
-				print('B', end='')
+				print('B', end=' ')
 			else: # No on bit for current index 
-				print('.', end='')
+				print('.', end=' ')
 			if (i + 1) % BOARD_N == 0:
 				print()
 	"""
@@ -201,13 +188,13 @@ class Bitboard:
 		"""
 	def get_colour_indexes(
 		self,
-		colour: PlayerColor
-	) -> list:
+		color: PlayerColor
+	) -> list[int]:
 		
 		indexes = []
 
 		# Get the corresponding board of the current player
-		if colour is PlayerColor.RED:
+		if color == PlayerColor.RED:
 			temp = self.red_board
 		else:
 			temp = self.blue_board
@@ -222,6 +209,171 @@ class Bitboard:
 			index += 1
 			
 		return indexes
+
+
+	"""
+	Input:
+		`tile_indexes` - A list of indexes representing the turned on bits in
+			one of the bitboards
+	Output: A set containing all the empty adjacent tiles to the tiles passed
+		into the function
+	Desc: Takes a list of indexes which represent where tiles are filled in one
+		of the boards. No colour specifics here. If red is using this function, 
+		we will be inputting reds tile indexes, and thus receive the adjacent
+		tiles. Same goes for blue
+	"""
+	def get_adjacent_squares(
+		self,
+		tile_indexes: list[int]
+	) -> set[int]:
+		
+		empty_adjacent_tiles = set()
+
+		for index in tile_indexes:
+
+			# Get left adjacent index
+			offset = -1
+			if (index % 3 == 0):
+				offset = (BOARD_N -1)
+			left_index = index + offset
+			if self.get_tile(left_index) is None:
+				empty_adjacent_tiles.add(left_index)
+
+			# Get right adjacent index
+			offset = 1
+			if ((index + 1) % 3 == 0):
+				offset = -(BOARD_N - 1)
+			right_index = index + offset
+			if self.get_tile(right_index) is None:
+				empty_adjacent_tiles.add(right_index)
+
+			# Get above adjacent index
+			above_index = index - BOARD_N
+			if (above_index < 0):
+				above_index = BOARD_N**2 + above_index
+			if self.get_tile(above_index) is None:
+				empty_adjacent_tiles.add(above_index)
+
+
+			# Get below adajcent index
+			below_index = index + BOARD_N
+			if (below_index >= BOARD_N**2):
+				below_index = below_index - BOARD_N**2
+			if self.get_tile(below_index) is None:
+				empty_adjacent_tiles.add(below_index)
+
+		return empty_adjacent_tiles
+
+	def move_adj(
+			self,
+		index: int,
+		move: str
+	) -> int:
+		
+		# Calc 'row' and 'col' or given index
+		row = index // BOARD_N
+		col = index % BOARD_N
+
+		if move == "right":
+			# In case where index is on right most column, col 10
+			if col == (BOARD_N - 1):
+				new_index = row * BOARD_N
+			# In case where not in the 10th col
+			else:
+				new_index = index + 1
+		
+		elif move == "left":
+			# In case where index is on left most column, col 0
+			if col == 0:
+				new_index = row * BOARD_N + (BOARD_N - 1)
+			# In case were index is not in the 0th col
+			else:
+				new_index = index - 1
+			
+		elif move == "down":
+			# In case where index is on bottom row, 10th row
+			if index + BOARD_N >= (BOARD_N **2):
+				new_index = (index + BOARD_N) % BOARD_N
+			# In case were index is not in the 10th row
+			else:
+				new_index = index + BOARD_N
+
+		elif move == "up":
+			# In case where index is on the top row, the 0th row
+			if index < BOARD_N:
+				new_index = (BOARD_N ** 2) - (BOARD_N - index)
+			# In case where index is not on the 0th row
+			else:
+				new_index = index - BOARD_N
+
+		return new_index
+
+
+
+	"""
+	Input:
+		`c1,c2,c3,c1` - Coords in a grid, assuming already wrapped
+		
+	Output: No output, but modifies the board
+	
+	Desc: Takes 4 coordinates which have already been wrapped, and converts 
+		them to indexes, before placing them on the players board.
+	"""
+	def place_four_tiles(
+		self,
+		colour: PlayerColor,
+		c1: Coord,
+		c2: Coord,
+		c3: Coord,
+		c4: Coord
+	):
+		# Take all 4 coords, convert them to indexes
+		index1 = get_index_from_coord(c1)
+		index2 = get_index_from_coord(c2)
+		index3 = get_index_from_coord(c3)
+		index4 = get_index_from_coord(c4)
+
+		# Call set_tile 4 times with the 4 different indexes	
+		self.set_tile(index1, colour)
+		self.set_tile(index2, colour)
+		self.set_tile(index3, colour)
+		self.set_tile(index4, colour)
+
+	def get_hash(
+		self
+	):
+		return hash((self.red_board, self.blue_board))
+
+"""
+Input: 
+	`coord` - A Coord tpye, with row,column
+	
+Output: An int representing a tile in the board
+
+Desc: Quality of life functin to convert a Coord to a tile in the bitboard.
+	Useful as the PlaceActions from the referee are still in Coord type
+"""
+def get_index_from_coord(
+	coord: Coord
+) -> int:
+	return coord.r * BOARD_N + coord.c
+
+
+#def Bitboard_to_OG(
+#	board: Bitboard
+#) -> Board:
+#	result = Board()
+#	for i in range(BOARD_N ** 2):
+#		if board.red_board & (1 << i): # On bit in the red board
+#			row = i//11
+#			col = i % 11
+#			result[(row,col)] == PlayerColor.RED
+#		elif self.blue_board & (1 << i): # On bit in the blue board
+#			row = i//11
+#			col = i % 11
+#			result[(row,col)] == PlayerColor.Blue
+
+#	return result
 
 
 """
