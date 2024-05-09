@@ -11,11 +11,13 @@ class Bitboard:
 	# Create 11 row and 11 column masks for clearing rows and columns.
 	# Creates here because they are the same for all board, and saves
 	# computation time when creating new bitboards
+
 	row_masks = [(1 << BOARD_N) - 1 << (i * BOARD_N) for i in range(BOARD_N)]
 	col_masks = [0 for _ in range(BOARD_N)]
 	for j in range(BOARD_N):
 		for k in range(BOARD_N):
 			col_masks[j] |= (1 << (j + k * BOARD_N))
+
 
 	def __init__(
 		self
@@ -115,20 +117,44 @@ class Bitboard:
 		they are filled, then it will set all the values back to 0
 	"""
 	def check_clear_filled_rowcol(
-		self
+		self,
+		changed_indexes: list[int]
 	):
 		# Create the full board showing which tiles are filled in
 		full_board = self.red_board | self.blue_board
+
 		combined_masks = 0
 
-		for i in range(BOARD_N):
-			if (full_board & Bitboard.row_masks[i]) == Bitboard.row_masks[i]:
-				combined_masks |= Bitboard.row_masks[i]
-			if (full_board & Bitboard.col_masks[i]) == Bitboard.col_masks[i]:
-				combined_masks |= Bitboard.col_masks[i]
+		# Find which rows and cols have been affected by the new placement
+		rows_to_check = set(index // BOARD_N for index in changed_indexes)
+		cols_to_check = set(index % BOARD_N for index in changed_indexes)
 
+		# Check to see if affected rows/cols are full
+		for row in rows_to_check:
+
+			row_mask = Bitboard.row_masks[row] # Precomputed row all set bits
+
+			# If row is full in the full board, then add it to the combined
+			# mask we will use to clear rows/cols at the end
+			if (full_board & row_mask) == row_mask:
+				combined_masks |= row_mask
+
+		for col in cols_to_check:
+
+			col_mask = Bitboard.col_masks[col] # Precomputed col all set bits
+
+			# If col is full in the full board, then add it to the combined
+			# mask we will use to clear rows/cols at the end
+			if (full_board & col_mask) == col_mask:
+				combined_masks |= col_mask
+
+		# 'Overlay' the negative combined mask over the red and blue board,
+		# turning off the bits that need to be cleared
+		# Combined mask will the rows and cols that were full in the fill board
+		# turned on, so it just maps all bits we need to turn off
 		self.red_board &= ~combined_masks
 		self.blue_board &= ~combined_masks
+
 	"""
 	Input:
 	

@@ -4,6 +4,30 @@
 import queue
 from typing import Tuple, Optional
 
+
+"""
+Areas for improvement
+
+In expand_out_sexy_style:
+    Instead of calling clear_colrow on every column and row, we could modify
+    the function to only check rows and columns that have been affected by the
+    piece being placed.
+    
+Whole expand/minimax logic, we need to cache board states and use in next level
+of minimax. MASSIVE MASSIVE TIME SAVE
+
+Move ordering, when expanding, have some sort of measure for how good a move is,
+so create that child first. This will save a lot of time in alpha, beta pruning
+
+We also really need to think about killer moves, book moves (during whole game
+eg moves you always make, like a checkmate in chess).
+
+"""
+
+
+
+
+
 MID_GAME = 70
 OPENING = 3 # TODO Change this to another value
 END_GAME = 75
@@ -184,9 +208,12 @@ def expand_out_sexy_style(
 ):
     # Add all of the boards of depth 4 and return
     if depth == 5:
-        #print(current_shape)
-        #TODO: Implement Row/col deletion
-        board.check_clear_filled_rowcol()
+        
+        # See if piece fills up rows or columns and delete them
+        board.check_clear_filled_rowcol(current_shape[1:])
+
+        # Hash the board and check for duplicates. If none, add the board and
+        # shape as a child
         board_hash = board.get_hash()
         if board_hash not in seen_hashes:
             seen_hashes.add(board_hash)
