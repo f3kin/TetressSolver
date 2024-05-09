@@ -10,10 +10,6 @@ from typing import Tuple, Optional
 """
 Areas for improvement
 
-In expand_out_sexy_style:
-    Instead of calling clear_colrow on every column and row, we could modify
-    the function to only check rows and columns that have been affected by the
-    piece being placed.
     
 Whole expand/minimax logic, we need to cache board states and use in next level
 of minimax. MASSIVE MASSIVE TIME SAVE
@@ -292,6 +288,7 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     seen_hashes = set()
+    #all_shapes = []
     all_shapes = iterative_expand(board, start_index, player_colour)
     #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
     return all_shapes #[1::]
