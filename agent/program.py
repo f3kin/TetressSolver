@@ -14,7 +14,7 @@ DEPTH_VALUE = 3
 DIRECTIONS = ["up", "down", "left", "right"]
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
-from agent.Bitboard import Bitboard 
+from agent.Bitboard import *
 
 
 class Agent:
@@ -100,7 +100,23 @@ class Agent:
 
 def search(board, color):
     # Minimax goes here
-    return minimax(board, color, 0, float('-inf'), float('inf'), True)
+    result = minimax(board, color, 0, float('-inf'), float('inf'), True)
+    coords = get_coord_from_index(result[2])
+    action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
+    return action
+
+
+def get_coord_from_index(
+    indexes: list[int]
+) -> list[Optional[PlaceAction]]:
+    result = []
+    #print(indexes)
+    if indexes is not None:
+        for i in range(4):
+            result.append(Coord(indexes[i]//11, indexes[i]%11))
+        return result
+
+
 
 ###### General Expansion logic (FROM EXPANSION BRANCH) ######
 
@@ -134,7 +150,7 @@ def expand(
         all_index_placements = init_expand_from_tile(board, index, color)
         moves.extend(all_index_placements)
     
-    print(moves)
+    #print(moves)
     return moves
 
 
@@ -169,8 +185,9 @@ def expand_out_sexy_style(
     # Add all of the boards of depth 4 and return
     if depth == 5:
         #print(current_shape)
-        board_hash = board.get_hash()
         #TODO: Implement Row/col deletion
+        board.check_clear_filled_rowcol()
+        board_hash = board.get_hash()
         if board_hash not in seen_hashes:
             seen_hashes.add(board_hash)
             all_shapes.append((board, current_shape[1:]))
@@ -190,7 +207,6 @@ def expand_out_sexy_style(
             new_board.set_tile(new_index, player_colour)
             new_shape = current_shape + [new_index]
             expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes, seen_hashes)
-
 
 """
 Inputs:
@@ -235,9 +251,9 @@ def minimax(
         beta: int, 
         maximizingPlayer: bool, 
         past = {}
-    ) -> Tuple[Optional[int], Optional[PlaceAction]]:
+    ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
     if cutoff_test(board, depth):
-        return None, None 
+        return None, None, None
     #TODO: make this more efficient through hashing, won't work otherwise
     #if board in past:
         #return past[board]
@@ -249,30 +265,34 @@ def minimax(
 def max_value(board, color, depth, alpha, beta, past):
     maxEval = float('-inf')
     best_move = None
+    best_coords = None
     for child in expand(board, color):
-        eval_score, _ = minimax(child, color, depth+1, alpha, beta, False)
+        eval_score, _,coords = minimax(child[0], color, depth+1, alpha, beta, False)
         if eval_score is not None and eval_score > maxEval:
             maxEval = eval_score
-            best_move = child  # Update the best move
+            best_move = child[0]  # Update the best move
+            best_coords = child[1]
         alpha = max(alpha, eval_score or alpha)  # Use `alpha` if `eval_score` is None
         if beta <= alpha:
             break
     #TODO: store maxEval, best_move in past
-    return maxEval, best_move
+    return maxEval, best_move, best_coords
 
 def min_value(board, color, depth, alpha, beta, past):
     minEval = float('inf')
     best_move = None
+    best_coords = None
     for child in expand(board, color):
-        eval_score, _ = minimax(child, color, depth+1, alpha, beta, True)
+        eval_score, _,coords = minimax(child[0], color, depth+1, alpha, beta, True)
         if eval_score is not None and eval_score < minEval:
             minEval = eval_score
-            best_move = child
+            best_move = child[0]
+            best_coords = child[1]
         beta = min(beta, eval_score or beta)  # Use `beta` if `eval_score` is None
         if beta <= alpha:
             break
     #TODO: store minEval, best_move in past
-    return minEval, best_move
+    return minEval, best_move, best_coords
 
 # Will evaluate a board state and assign it a value
 def evaluation(board, colour):
