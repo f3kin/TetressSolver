@@ -134,7 +134,7 @@ def expand(
         all_index_placements = init_expand_from_tile(board, index, color)
         moves.extend(all_index_placements)
     
-    #print(len(moves))
+    print(moves)
     return moves
 
 
@@ -163,7 +163,7 @@ def expand_out_sexy_style(
     player_colour: PlayerColor,
     depth: int,
     current_shape: list[int], 
-    all_shapes: list[Bitboard],
+    all_shapes: list[(Bitboard, list[int])],
     seen_hashes: set
 ):
     # Add all of the boards of depth 4 and return
@@ -173,7 +173,7 @@ def expand_out_sexy_style(
         #TODO: Implement Row/col deletion
         if board_hash not in seen_hashes:
             seen_hashes.add(board_hash)
-            all_shapes.append(board)
+            all_shapes.append((board, current_shape[1:]))
         return
     
 
@@ -213,7 +213,7 @@ def init_expand_from_tile(
     seen_hashes = set()
     all_shapes = []
     expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
-    return all_shapes[1::]
+    return all_shapes #[1::]
         
 
 
