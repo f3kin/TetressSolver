@@ -173,6 +173,10 @@ def expand(
         visited = {index}  #TODO: Implement set functionality
         all_index_placements = init_expand_from_tile(board, index, color)
         moves.extend(all_index_placements)
+        
+    # TODO Look at this
+    # Sort children by some heuristic estimation before returning
+    #children.sort(key=lambda x: heuristic_estimate(x))
     
     #print(moves)
     return moves
