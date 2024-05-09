@@ -8,13 +8,21 @@ from referee.game.pieces import PieceType, _TEMPLATES
 from referee.game import board
 class Bitboard:
 
+	# Create 11 row and 11 column masks for clearing rows and columns.
+	# Creates here because they are the same for all board, and saves
+	# computation time when creating new bitboards
+	row_masks = [(1 << BOARD_N) - 1 << (i * BOARD_N) for i in range(BOARD_N)]
+	col_masks = [0 for _ in range(BOARD_N)]
+	for j in range(BOARD_N):
+		for k in range(BOARD_N):
+			col_masks[j] |= (1 << (j + k * BOARD_N))
+
 	def __init__(
 		self
 	):
 		self.red_board = 0
 		self.blue_board = 0
-		self.full_mask = (1 << BOARD_N) - 1 # Used for clearing rows/cols
-		
+
 		# Size of the board, 121 bits
 		self.total_bits = BOARD_N * BOARD_N
 	
@@ -109,32 +117,18 @@ class Bitboard:
 	def check_clear_filled_rowcol(
 		self
 	):
-		# New bitboard with 1 for occupied tiles and 0 for empty
+		# Create the full board showing which tiles are filled in
 		full_board = self.red_board | self.blue_board
-		rows_to_clear = []
-		cols_to_clear = []
+		combined_masks = 0
 
-		# Check each row to see if it is full. If it is, append that mask
 		for i in range(BOARD_N):
-			row_mask = self.full_mask << (i * BOARD_N)
-			if (full_board & row_mask) == row_mask:
-				rows_to_clear.append(row_mask)
+			if (full_board & Bitboard.row_masks[i]) == Bitboard.row_masks[i]:
+				combined_masks |= Bitboard.row_masks[i]
+			if (full_board & Bitboard.col_masks[i]) == Bitboard.col_masks[i]:
+				combined_masks |= Bitboard.col_masks[i]
 
-		# Check each col to see if it is full. More difficult because a full col
-		# spans over all 11 rows. If full, append mask
-		for j in range(BOARD_N):
-			col_mask = 0
-			for k in range(BOARD_N):
-				col_mask |= (1 << (j + k * BOARD_N))
-			if (full_board & col_mask) == col_mask:
-				cols_to_clear.append(col_mask)
-
-		# A mask means that some row/col is full. For each mask, use that mask
-		# to change the value of each bit in the row/col to 0
-		for mask in rows_to_clear + cols_to_clear:
-			self.red_board &= ~mask
-			self.blue_board &= ~mask
-
+		self.red_board &= ~combined_masks
+		self.blue_board &= ~combined_masks
 	"""
 	Input:
 	
