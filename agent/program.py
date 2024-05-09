@@ -1,8 +1,32 @@
 # COMP30024 Artificial Intelligence, Semester 1 2024
 # Project Part B: Game Playing Agent
 
-import queue
+
+# Depends entirely on if we can use deque
+from collections import deque
 from typing import Tuple, Optional
+
+
+"""
+Areas for improvement
+
+    
+Whole expand/minimax logic, we need to cache board states and use in next level
+of minimax. MASSIVE MASSIVE TIME SAVE
+
+Move ordering, when expanding, have some sort of measure for how good a move is,
+so create that child first. This will save a lot of time in alpha, beta pruning
+
+We also really need to think about killer moves, book moves (during whole game
+eg moves you always make, like a checkmate in chess).
+
+
+
+"""
+
+
+
+
 
 MID_GAME = 70
 OPENING = 3 # TODO Change this to another value
@@ -149,6 +173,10 @@ def expand(
         visited = {index}  #TODO: Implement set functionality
         all_index_placements = init_expand_from_tile(board, index, color)
         moves.extend(all_index_placements)
+        
+    # TODO Look at this
+    # Sort children by some heuristic estimation before returning
+    #children.sort(key=lambda x: heuristic_estimate(x))
     
     #print(moves)
     return moves
@@ -184,9 +212,12 @@ def expand_out_sexy_style(
 ):
     # Add all of the boards of depth 4 and return
     if depth == 5:
-        #print(current_shape)
-        #TODO: Implement Row/col deletion
-        board.check_clear_filled_rowcol()
+        
+        # See if piece fills up rows or columns and delete them
+        board.check_clear_filled_rowcol(current_shape[1:])
+
+        # Hash the board and check for duplicates. If none, add the board and
+        # shape as a child
         board_hash = board.get_hash()
         if board_hash not in seen_hashes:
             seen_hashes.add(board_hash)
@@ -208,6 +239,40 @@ def expand_out_sexy_style(
             new_shape = current_shape + [new_index]
             expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes, seen_hashes)
 
+def iterative_expand(
+    board: Bitboard, 
+    index: int, 
+    player_colour: PlayerColor
+):
+
+    queue = deque([(board, index, [index], 1)])
+    all_shapes = []
+    seen_hashes = set()
+
+    while queue:
+        current_board, current_index, shape, depth = queue.popleft()
+
+        if depth == 5:
+
+            current_board.check_clear_filled_rowcol(shape)
+            board_hash = current_board.get_hash()
+            if board_hash not in seen_hashes:
+                seen_hashes.add(board_hash)
+                all_shapes.append((current_board.copy(), shape[1:]))
+            continue
+
+        for direction in DIRECTIONS:
+            new_index = current_board.move_adj(current_index, direction)
+            if current_board.get_tile(new_index) is None and new_index not in shape:
+                current_board.set_tile(new_index, player_colour)
+                new_shape = shape + [new_index]
+                queue.append((current_board, new_index, new_shape, depth + 1))
+                current_board.clear_tile(new_index)
+
+    return all_shapes
+
+
+
 """
 Inputs:
     `board`
@@ -227,8 +292,10 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     seen_hashes = set()
-    all_shapes = []
-    expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
+    
+    all_shapes = iterative_expand(board, start_index, player_colour)
+    #all_shapes = []
+    #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
     return all_shapes #[1::]
         
 
