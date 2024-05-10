@@ -311,19 +311,24 @@ def init_expand_from_tile(
 #         self.board = board
     
 def minimax(
-        board: Bitboard, 
-        color: PlayerColor,
-        depth: int, 
-        alpha: int, 
-        beta: int, 
-        maximizingPlayer: bool, 
-        past = {}
-    ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
+    board: Bitboard, 
+    color: PlayerColor,
+    depth: int, 
+    alpha: int, 
+    beta: int, 
+    maximizingPlayer: bool, 
+    past = {}
+) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
+    # Add a call to the evaluate function
     if cutoff_test(board, depth):
-        return None, None, None
-    #TODO: make this more efficient through hashing, won't work otherwise
-    #if board in past:
-        #return past[board]
+        eval_score = evaluation(board, color)
+        return eval_score, None, None
+        
+    # Check if the board state has been visited before
+    board_key = hash(board)
+    if board_key in past:
+        return past[board_key]
+
     if maximizingPlayer:
         return max_value(board, color, depth, alpha, beta, past)
     else:
@@ -334,7 +339,7 @@ def max_value(board, color, depth, alpha, beta, past):
     best_move = None
     best_coords = None
     for child in expand(board, color):
-        eval_score, _,coords = minimax(child[0], color, depth+1, alpha, beta, False)
+        eval_score, _, coords = minimax(child[0], color, depth+1, alpha, beta, False, past)
         if eval_score is not None and eval_score > maxEval:
             maxEval = eval_score
             best_move = child[0]  # Update the best move
@@ -342,7 +347,8 @@ def max_value(board, color, depth, alpha, beta, past):
         alpha = max(alpha, eval_score or alpha)  # Use `alpha` if `eval_score` is None
         if beta <= alpha:
             break
-    #TODO: store maxEval, best_move in past
+    # Store maxEval, best_move in past
+    past[hash(board)] = maxEval, best_move, best_coords
     return maxEval, best_move, best_coords
 
 def min_value(board, color, depth, alpha, beta, past):
@@ -350,7 +356,7 @@ def min_value(board, color, depth, alpha, beta, past):
     best_move = None
     best_coords = None
     for child in expand(board, color):
-        eval_score, _,coords = minimax(child[0], color, depth+1, alpha, beta, True)
+        eval_score, _, coords = minimax(child[0], color, depth+1, alpha, beta, True, past)
         if eval_score is not None and eval_score < minEval:
             minEval = eval_score
             best_move = child[0]
@@ -358,7 +364,8 @@ def min_value(board, color, depth, alpha, beta, past):
         beta = min(beta, eval_score or beta)  # Use `beta` if `eval_score` is None
         if beta <= alpha:
             break
-    #TODO: store minEval, best_move in past
+    # Store minEval, best_move in past
+    past[hash(board)] = minEval, best_move, best_coords
     return minEval, best_move, best_coords
 
 # Will evaluate a board state and assign it a value
