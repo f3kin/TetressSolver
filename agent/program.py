@@ -108,8 +108,8 @@ class Agent:
         c1, c2, c3, c4 = place_action.coords
         self.board.place_four_tiles(color, c1,c2,c3,c4)
 
-        print("Board after being updated")
-        self.board.bitboard_display()
+        #print("Board after being updated")
+        #self.board.bitboard_display()
 
         #print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
@@ -207,9 +207,13 @@ def expand_out_sexy_style(
     # Add all of the boards of depth 4 and return
     if depth == 5:
         
+        print("Before clear")
+        board.bitboard_display()
         # See if piece fills up rows or columns and delete them
         board.check_clear_filled_rowcol(current_shape[1:])
+        print("After clear")
 
+        board.bitboard_display()
         # Hash the board and check for duplicates. If none, add the board and
         # shape as a child
         board_hash = board.get_hash()
@@ -248,9 +252,14 @@ def iterative_expand(
 
         if depth == 5:
             
-            #print("Board before clearing")
-            #current_board.bitboard_display()
-            current_board.check_clear_filled_rowcol(shape[1:])
+            print("Before clear")
+            current_board.bitboard_display()
+            current_board.check_clear_filled_rowcol(shape[1:])      # THIS IS THE ISSUE. CURRENT_BOARD DOESNT HAVE OUR NEW PIECE ON IT
+                                                                    # SO WHATEVER BOARD WE ARE RETURNING FROM MINIMAX AND UPDATING WITH 
+                                                                    # ISNT THE SAME ONE WE CHECK FOR ROW CLEARS HERE
+
+            print("After clear")
+            current_board.bitboard_display()
             
             #print("Board after clearing")
             #current_board.bitboard_display()
