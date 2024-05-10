@@ -134,7 +134,7 @@ class Bitboard:
 	):
 		# Create the full board showing which tiles are filled in
 		full_board = self.red_board | self.blue_board
-
+		
 		combined_masks = 0
 
 		# Find which rows and cols have been affected by the new placement
@@ -143,21 +143,29 @@ class Bitboard:
 
 		# Check to see if affected rows/cols are full
 		for row in rows_to_check:
-
+			#print("Entered")
 			row_mask = Bitboard.row_masks[row] # Precomputed row all set bits
 
 			# If row is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
+			
 			if (full_board & row_mask) == row_mask:
+				print("Full row in row =" + str(row))
 				combined_masks |= row_mask
 
 		for col in cols_to_check:
 
 			col_mask = Bitboard.col_masks[col] # Precomputed col all set bits
 
+
+			if col == 1:
+				print(bin(full_board & col_mask))
+				print(bin(col_mask))
 			# If col is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
 			if (full_board & col_mask) == col_mask:
+				print("Full col in col =" + str(col))
+
 				combined_masks |= col_mask
 
 		# 'Overlay' the negative combined mask over the red and blue board,
