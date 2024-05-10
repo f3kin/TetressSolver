@@ -6,6 +6,8 @@ from referee.game.player import PlayerColor
 from referee.game.coord import Coord
 from referee.game.pieces import PieceType, _TEMPLATES
 from referee.game import board
+
+from copy import deepcopy
 class Bitboard:
 
 	# Create 11 row and 11 column masks for clearing rows and columns.
@@ -171,7 +173,7 @@ class Bitboard:
 			#print(col_mask)
 
 			if masked_col_board == col_mask:
-				print("Test")
+				#print("Test")
 				combined_masks |= col_mask
 
 		# 'Overlay' the negative combined mask over the red and blue board,

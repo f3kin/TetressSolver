@@ -61,18 +61,33 @@ class Agent:
                         Coord(1, 0), 
                         Coord(2, 0), 
                         Coord(3, 0)
+                    ), PlaceAction(
+                        Coord(3,1),
+                        Coord(4,1),
+                        Coord(5,1),
+                        Coord(6,1)
+                    ), PlaceAction(
+                        Coord(6,2),
+                        Coord(7,2),
+                        Coord(8,2),
+                        Coord(9,2)
                     )]
         else:
             self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
-                        Coord(4, 1), 
-                        Coord(4, 0), 
-                        Coord(5, 0), 
-                        Coord(6, 0)
+                        Coord(0, 10), 
+                        Coord(1, 10), 
+                        Coord(2, 10), 
+                        Coord(3, 10)
                     ), PlaceAction(
-                        Coord(4, 0), 
-                        Coord(4, 1), 
-                        Coord(4, 2), 
-                        Coord(4, 3)
+                        Coord(3,9),
+                        Coord(4,9),
+                        Coord(5,9),
+                        Coord(6,9)
+                    ), PlaceAction(
+                        Coord(6,8),
+                        Coord(7,8),
+                        Coord(8,8),
+                        Coord(9,8)
                     )]
         match color:
             case PlayerColor.RED:
@@ -252,20 +267,26 @@ def iterative_expand(
 
         if depth == 5:
             
-            print("Before clear")
-            current_board.bitboard_display()
+            #print("Before clear")
+            #current_board.bitboard_display()
             current_board.check_clear_filled_rowcol(shape[1:])      # THIS IS THE ISSUE. CURRENT_BOARD DOESNT HAVE OUR NEW PIECE ON IT
                                                                     # SO WHATEVER BOARD WE ARE RETURNING FROM MINIMAX AND UPDATING WITH 
                                                                     # ISNT THE SAME ONE WE CHECK FOR ROW CLEARS HERE
+            
 
-            print("After clear")
-            current_board.bitboard_display()
+            # There is something seriously wrong with this block of code.
+            # Mightve fixed the rowcol deletion error, but there is an infitinite loop here????
+            
+
+            #print("After clear")
+            #current_board.bitboard_display()
             
             #print("Board after clearing")
             #current_board.bitboard_display()
 
             board_hash = current_board.get_hash()
-            if board_hash not in seen_hashes:
+            if board_hash not in seen_hashes:   
+                print("New board added")                            
                 seen_hashes.add(board_hash)
                 all_shapes.append((current_board.copy(), shape[1:]))
             continue
@@ -273,10 +294,18 @@ def iterative_expand(
         for direction in DIRECTIONS:
             new_index = current_board.move_adj(current_index, direction)
             if current_board.get_tile(new_index) is None and new_index not in shape:
-                current_board.set_tile(new_index, player_colour)
+
+
+                new_board = current_board.copy()
+                new_board.set_tile(new_index, player_colour)
                 new_shape = shape + [new_index]
-                queue.append((current_board, new_index, new_shape, depth + 1))
-                current_board.clear_tile(new_index)
+                queue.append((new_board, new_index, new_shape, depth + 1))
+
+
+                #current_board.set_tile(new_index, player_colour)
+                #new_shape = shape + [new_index]
+                #queue.append((current_board, new_index, new_shape, depth + 1))
+                #current_board.clear_tile(new_index)
 
     return all_shapes
 
