@@ -125,9 +125,9 @@ class Agent:
 def search(board, color):
     # Minimax goes here
     result = minimax(board, color, 0, float('-inf'), float('inf'), True)
-    print("\n")
-    result[1].bitboard_display()
-    print("\n")
+    #print("\n")
+    #result[1].bitboard_display()
+    #print("\n")
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -248,16 +248,22 @@ def iterative_expand(
     player_colour: PlayerColor
 ):
 
-    queue = deque([(board, index, [index], 1)])
+    queue = deque([(board, index, [index], int(1))])
     all_shapes = []
     seen_hashes = set()
 
     while queue:
-        current_board, current_index, shape, depth = queue.popleft()
+        current_board, current_index, shape, depth = queue.popleft() # Possible issue here. depth is Literal[1]?
 
         if depth == 5:
+            
+            #print("Board before clearing")
+            #current_board.bitboard_display()
+            current_board.check_clear_filled_rowcol(shape[1:])
+            
+            #print("Board after clearing")
+            #current_board.bitboard_display()
 
-            current_board.check_clear_filled_rowcol(shape)
             board_hash = current_board.get_hash()
             if board_hash not in seen_hashes:
                 seen_hashes.add(board_hash)
