@@ -5,7 +5,7 @@
 # Depends entirely on if we can use deque
 from collections import deque
 from typing import Tuple, Optional
-
+from copy import deepcopy
 
 """
 Areas for improvement
@@ -125,6 +125,9 @@ class Agent:
 def search(board, color):
     # Minimax goes here
     result = minimax(board, color, 0, float('-inf'), float('inf'), True)
+    print("\n")
+    result[1].bitboard_display()
+    print("\n")
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -294,9 +297,8 @@ def init_expand_from_tile(
     seen_hashes = set()
     
     all_shapes = iterative_expand(board, start_index, player_colour)
-    #all_shapes = []
     #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
-    return all_shapes #[1::]
+    return all_shapes 
         
 
 
@@ -321,8 +323,11 @@ def minimax(
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
     # Add a call to the evaluate function
     if cutoff_test(board, depth):
+        #print("\n")
         eval_score = evaluation(board, color)
-        return eval_score, None, None
+        #print("\n")
+        #board.bitboard_display()
+        return eval_score, board, None
         
     # Check if the board state has been visited before
     board_key = hash(board)
@@ -330,15 +335,15 @@ def minimax(
         return past[board_key]
 
     if maximizingPlayer:
-        return max_value(board, color, depth, alpha, beta, past)
+        return max_value(deepcopy(board), color, depth, alpha, beta, past) #TODO: Implement clone > deepcopy
     else:
-        return min_value(board, color, depth, alpha, beta, past)
+        return min_value(deepcopy(board), color, depth, alpha, beta, past)
 
 def max_value(board, color, depth, alpha, beta, past):
     maxEval = float('-inf')
     best_move = None
     best_coords = None
-    for child in expand(board, color):
+    for child in expand(board, color): #returns a tuple (Bitboard, coords)
         eval_score, _, coords = minimax(child[0], color, depth+1, alpha, beta, False, past)
         if eval_score is not None and eval_score > maxEval:
             maxEval = eval_score

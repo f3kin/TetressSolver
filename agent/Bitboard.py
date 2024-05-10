@@ -27,6 +27,18 @@ class Bitboard:
 
 		# Size of the board, 121 bits
 		self.total_bits = BOARD_N * BOARD_N
+
+	# def clone(self):
+    #     # Create a new instance of the Bitboard class
+	# 	cloned_board = Bitboard()
+	# 	cloned_board.red_board = self.red_board
+	# 	cloned_board.blue_board = self.blue_board
+    #     # Copy the relevant attributes from the original instance to the new one
+    #     # For example:
+    #     # cloned_board.attribute1 = self.attribute1
+    #     # cloned_board.attribute2 = self.attribute2
+    #     # ...
+	# 	return cloned_board
 	
 	"""
 	Input:
