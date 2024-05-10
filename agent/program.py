@@ -25,9 +25,6 @@ eg moves you always make, like a checkmate in chess).
 """
 
 
-
-
-
 MID_GAME = 70
 OPENING = 3 # TODO Change this to another value
 END_GAME = 75
@@ -64,33 +61,18 @@ class Agent:
                         Coord(1, 0), 
                         Coord(2, 0), 
                         Coord(3, 0)
-                    ), PlaceAction(
-                        Coord(3, 1), 
-                        Coord(4, 1), 
-                        Coord(5, 1), 
-                        Coord(6, 1)
-                    ), PlaceAction(
-                        Coord(6, 2), 
-                        Coord(7, 2), 
-                        Coord(8, 2), 
-                        Coord(9, 2)
                     )]
         else:
             self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
-                        Coord(0, 10), 
-                        Coord(1, 10), 
-                        Coord(2, 10), 
-                        Coord(3, 10)
+                        Coord(4, 1), 
+                        Coord(4, 0), 
+                        Coord(5, 0), 
+                        Coord(6, 0)
                     ), PlaceAction(
-                        Coord(3, 9), 
-                        Coord(4, 9), 
-                        Coord(5, 9), 
-                        Coord(6, 9)
-                    ), PlaceAction(
-                        Coord(6, 8), 
-                        Coord(7, 8), 
-                        Coord(8, 8), 
-                        Coord(9, 8)
+                        Coord(4, 0), 
+                        Coord(4, 1), 
+                        Coord(4, 2), 
+                        Coord(4, 3)
                     )]
         match color:
             case PlayerColor.RED:
@@ -103,9 +85,14 @@ class Agent:
         This method is called by the referee each time it is the agent's turn
         to take an action. It must always return an action object. 
         """
+
+        ##test_full_column()
+        #test_row_full()
+        #return 0
+
         self.num_moves += 1
-        if self.num_moves < OPENING:
-            return self.book_moves[self.num_moves]
+        if self.book_moves:
+            return self.book_moves.pop(0)
         elif self.num_moves < END_GAME:
             return search(self.board, self._color) 
         else:
@@ -120,6 +107,9 @@ class Agent:
         place_action: PlaceAction = action
         c1, c2, c3, c4 = place_action.coords
         self.board.place_four_tiles(color, c1,c2,c3,c4)
+
+        print("Board after being updated")
+        self.board.bitboard_display()
 
         #print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
@@ -412,3 +402,83 @@ def endgame_search(board, color):
     # May not be needed as we could simply modify the heuristic 
     #TODO: Implement me
     return search(board,color)
+
+def test_row_full():
+    bb = Bitboard()
+    test_row = 1  # Testing the third row
+
+    # Set all bits in the test_row
+    for i in range(test_row * BOARD_N, (test_row + 1) * BOARD_N):
+        bb.set_tile(i, PlayerColor.RED)
+
+
+    bb.bitboard_display()
+
+    bb.check_clear_filled_rowcol([12])
+    # Print expected and actual masks
+    full_board = bb.red_board | bb.blue_board
+    row_mask = bb.row_masks[test_row]
+    masked_row_board = full_board & row_mask
+
+    print("Expected row_mask:", bin(row_mask))
+    print("Actual masked_row_board:", bin(masked_row_board))
+
+    if masked_row_board == row_mask:
+        print("Test passed: Row is correctly full.")
+    else:
+        print("Test failed: Row is not detected as full.")
+
+    # Optional: Print the board to visually verify
+    bb.bitboard_display()
+
+
+def test_full_column():
+    bb = Bitboard()
+    test_column = 1  # Change this index to test different columns
+
+    # Set all bits in the test_column across all rows
+    for i in range(test_column, BOARD_N * BOARD_N, BOARD_N):
+        bb.set_tile(i, PlayerColor.RED)  # Assume setting RED for simplicity
+    
+    
+    bb.set_tile(120, PlayerColor.RED)
+
+
+    bb.bitboard_display()
+
+
+    full_board = bb.red_board | bb.blue_board
+    col_mask = bb.col_masks[test_column]
+    masked_col_board = full_board & col_mask
+    print("Full board before clearing:             ", bin(full_board))
+    print("Expected column_mask before clearing:            ", bin(col_mask))
+    print("Actual masked_col_board before clearing:         ", bin(masked_col_board))
+
+    if masked_col_board == col_mask:
+        print("fIRST Test passed: Column is correctly full.")
+    else:
+        print("First Test failed: Column is not detected as full.")
+
+    # Now manually call the check function
+    #print(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
+    bb.check_clear_filled_rowcol(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
+
+    # Print expected and actual masks
+    full_board = bb.red_board | bb.blue_board
+    col_mask = bb.col_masks[test_column]
+    masked_col_board = full_board & col_mask
+
+    print("Full board after clearing:              ", bin(full_board))
+    print("Expected column_mask after clearing:             ", bin(col_mask))
+    print("Actual masked_col_board after clearing: ", bin(masked_col_board))
+
+
+    # this will return fail, but that is correct, because the masked_col_board, eg the board & the col_mask should be 0
+    # after the col mask is cleared from the board
+    if masked_col_board == col_mask:
+        print("Second Test passed: Column is correctly full.")
+    else:
+        print("Second Test failed: Column is not detected as full.")
+
+    # Optional: Print the board to visually verify
+    bb.bitboard_display()

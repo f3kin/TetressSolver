@@ -63,8 +63,9 @@ class Bitboard:
 		# a board with only the index tile switched on
 		if colour == PlayerColor.RED:
 			self.red_board |= (1 << index)
-		elif colour == PlayerColor.BLUE:
+		else:
 			self.blue_board |= (1 << index) 
+		
 
 	"""
 	Input:
@@ -154,9 +155,9 @@ class Bitboard:
 			masked_row_board = full_board & row_mask
 			# If row is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
-			#print(bin(full_board & row_mask))
-			print("masked row board = " + str(masked_row_board))
-			print("row mask = " + str(row_mask))
+			##print(bin(full_board & row_mask))
+			#print("masked row board = " + str(masked_row_board))
+			#print("row mask = " + str(row_mask))
 			if masked_row_board == row_mask:
 				combined_masks |= row_mask
 
@@ -170,6 +171,7 @@ class Bitboard:
 			#print(col_mask)
 
 			if masked_col_board == col_mask:
+				print("Test")
 				combined_masks |= col_mask
 
 		# 'Overlay' the negative combined mask over the red and blue board,
