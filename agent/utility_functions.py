@@ -1,4 +1,4 @@
-from Bitboard import Bitboard
+from agent.Bitboard import Bitboard
 from referee.game.constants import BOARD_N
 
 # Utility functions for minimax.

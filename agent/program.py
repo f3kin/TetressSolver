@@ -103,9 +103,13 @@ class Agent:
         This method is called by the referee each time it is the agent's turn
         to take an action. It must always return an action object. 
         """
+
         self.num_moves += 1
-        if self.num_moves < OPENING:
-            return self.book_moves[self.num_moves]
+
+        # If there are still book moves available, play them and remove
+        # the move from bookmoves. 
+        if self.book_moves:
+            return self.book_moves.pop(0)
         elif self.num_moves < END_GAME:
             return search(self.board, self._color) 
         else:
