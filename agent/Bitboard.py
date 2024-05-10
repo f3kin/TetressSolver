@@ -13,11 +13,14 @@ class Bitboard:
 	# computation time when creating new bitboards
 
 	row_masks = [(1 << BOARD_N) - 1 << (i * BOARD_N) for i in range(BOARD_N)]
+	for i in range(BOARD_N):
+		print(bin(row_masks[i]))
 	col_masks = [0 for _ in range(BOARD_N)]
+	
 	for j in range(BOARD_N):
 		for k in range(BOARD_N):
 			col_masks[j] |= (1 << (j + k * BOARD_N))
-
+		#print(bin(col_masks[j])) NEEDS TO ZERO FILL
 
 	def __init__(
 		self
@@ -134,7 +137,7 @@ class Bitboard:
 	):
 		# Create the full board showing which tiles are filled in
 		full_board = self.red_board | self.blue_board
-		
+
 		combined_masks = 0
 
 		# Find which rows and cols have been affected by the new placement
@@ -142,30 +145,24 @@ class Bitboard:
 		cols_to_check = set(index % BOARD_N for index in changed_indexes)
 
 		# Check to see if affected rows/cols are full
+		#print(rows_to_check)
 		for row in rows_to_check:
-			#print("Entered")
+			
 			row_mask = Bitboard.row_masks[row] # Precomputed row all set bits
 
 			# If row is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
-			
+			#print(bin(full_board & row_mask))
 			if (full_board & row_mask) == row_mask:
-				print("Full row in row =" + str(row))
 				combined_masks |= row_mask
 
 		for col in cols_to_check:
 
 			col_mask = Bitboard.col_masks[col] # Precomputed col all set bits
 
-
-			if col == 1:
-				print(bin(full_board & col_mask))
-				print(bin(col_mask))
 			# If col is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
 			if (full_board & col_mask) == col_mask:
-				print("Full col in col =" + str(col))
-
 				combined_masks |= col_mask
 
 		# 'Overlay' the negative combined mask over the red and blue board,
