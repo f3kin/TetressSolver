@@ -39,6 +39,7 @@ DIRECTIONS = ["up", "down", "left", "right"]
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from agent.Bitboard import *
+from agent.utility_functions import *
 
 
 class Agent:
@@ -362,8 +363,18 @@ def min_value(board, color, depth, alpha, beta, past):
     return minEval, best_move, best_coords
 
 # Will evaluate a board state and assign it a value
-def evaluation(board, colour):
-    return 1
+def evaluation(
+    board: Bitboard, 
+    colour: PlayerColor
+) -> float:
+
+    # Different factor multiples
+    v1_constant = 2
+    v6_constant = 1
+
+    goodness = v1_constant * v1_minimax_util(board, colour) + v6_constant * v6_minimax_util(board, colour)
+    
+    return goodness
 
 # Checks if the move is a completed game(very unlikely), or we have reached our desired depth
 def cutoff_test(board, depth):
