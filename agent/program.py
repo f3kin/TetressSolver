@@ -125,9 +125,9 @@ class Agent:
 def search(board, color):
     # Minimax goes here
     result = minimax(board, color, 0, float('-inf'), float('inf'), True)
-    #print("\n")
-    #result[1].bitboard_display()
-    #print("\n")
+    print("\n")
+    result[1].bitboard_display()
+    print("\n")
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
