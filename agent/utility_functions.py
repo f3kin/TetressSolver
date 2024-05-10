@@ -1,4 +1,4 @@
-from Bitboard import Bitboard
+from agent.Bitboard import Bitboard
 from referee.game.constants import BOARD_N
 
 # Utility functions for minimax.
@@ -11,6 +11,7 @@ from referee.game.constants import BOARD_N
 
 """
 Minimax utility function - 1
+
 
 Factors Considered:
 	- Red vs Blue Ratio
@@ -34,10 +35,14 @@ def v1_minimax_util(
 	
 	# Return calling_players_tilecount/opp_player_tilecount. The higher the
 	# number, the better move it is
+
+
+	# Need to normalise this value. I suppose the maximum ratio would be 121:0,
+	# so for now we will divide by 121
 	if is_blue_turn:
-		return blue_counts/red_counts
+		return (blue_counts/red_counts)/(BOARD_N **2)
 	else:
-		return red_counts/blue_counts
+		return (red_counts/blue_counts)/(BOARD_N ** 2)
 
 
 """
@@ -112,34 +117,30 @@ just approximate
 def v6_minimax_util(
 	bitboard: Bitboard,
 	is_blue_turn: bool
-) -> int:
+) -> float:
 
 	# Pick the board depending on the player
-	if is_blue_turn:
-		board = bitboard.blue_board
-	else:
-		board = bitboard.red_board
+	board = bitboard.blue_board if is_blue_turn else bitboard.red_board
 
-	rows_needed = set()
-	cols_needed = set()
+	rows_needed = 0
+	cols_needed = 0
 
 	# Check if there is at least 1 set bit in each row
 	for row in range(BOARD_N):
-		row_mask = ((1 << BOARD_N) - 1) << (row * BOARD_N)
+		row_mask = Bitboard.row_masks[row]
 		if board & row_mask != 0:
-			rows_needed.add(row)
+			rows_needed += 1
 
 	# Check if there is at least 1 set bit in each column
 	for col in range(BOARD_N):
-		col_mask = 0
-		for row in range(BOARD_N):
-			col_mask |= (1 << (row * BOARD_N + col))
+		col_mask = Bitboard.col_masks[col]
 		if board & col_mask != 0:
-			cols_needed.add(col)
+			cols_needed += 1
+	min_clears_needed = min(rows_needed, cols_needed)
 
-	min_clears_needed = min(len(rows_needed), len(cols_needed))
+	# Normalise and return
 
-	return min_clears_needed
+	return min_clears_needed / BOARD_N
 
 	
 
