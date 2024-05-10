@@ -155,8 +155,8 @@ class Bitboard:
 			# If row is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
 			#print(bin(full_board & row_mask))
-			print("masked row board = " + str(masked_row_board))
-			print("row mask = " + str(row_mask))
+			print("masked row board = " + str(bin(masked_row_board)))
+			print("row mask = " + str(bin(row_mask)))
 			if masked_row_board == row_mask:
 				combined_masks |= row_mask
 
