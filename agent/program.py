@@ -30,7 +30,7 @@ OPENING = 3 # TODO Change this to another value
 END_GAME = 75
 MAX_TURN = 0
 MIN_TURN = 1
-DEPTH_VALUE = 3
+DEPTH_VALUE = 50
 
 DIRECTIONS = ["up", "down", "left", "right"]
 
@@ -106,8 +106,26 @@ class Agent:
         #return 0
 
         self.num_moves += 1
+
+        # If there are still possible book moves
         if self.book_moves:
-            return self.book_moves.pop(0)
+            
+            # Cycle through from start of moves
+            for i in range(len(self.book_moves)):
+
+                # Check if the move is valid, if so, play it.
+                # If not, check next move
+                move = self.book_moves[i]
+                book_move_indexes = [get_index_from_coord(move.c1), 
+                                    get_index_from_coord(move.c2),
+                                    get_index_from_coord(move.c3),
+                                    get_index_from_coord(move.c4)]
+                
+                if self.board.valid_book_move(book_move_indexes, self._color, self.num_moves):
+                    self.book_moves.pop(i)
+                    return move
+
+        # If there are no more book moves, move onto search
         elif self.num_moves < END_GAME:
             return search(self.board, self._color) 
         else:
@@ -136,11 +154,8 @@ class Agent:
 
 def search(board, color):
     # Minimax goes here
-    result = minimax(board, color, 3, float('-inf'), float('inf'), True)
+    result = minimax(board, color, 50, float('-inf'), float('inf'), True)
 
-    #print("\n")
-    #result[1].bitboard_display()
-    #print("\n")
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -283,26 +298,11 @@ def iterative_expand(
 
         if depth == 5:
             
-            #print("Before clear")
-            #current_board.bitboard_display()
             current_board.check_clear_filled_rowcol(shape[1:]) 
-            
-
-            # There is something seriously wrong with this block of code.
-            # Mightve fixed the rowcol deletion error, but there is an infitinite loop here????
-            
-
-            #print("After clear")
-            #current_board.bitboard_display()
-            
-            #print("Board after clearing")
-            #current_board.bitboard_display()
 
             board_hash = current_board.get_hash()
             if board_hash not in seen_hashes:   
-                #print("New board added")                            
                 seen_hashes.add(board_hash)
-                #print(len(seen_hashes))
                 all_shapes.append((current_board.copy(), shape[1:]))
             continue
 
@@ -310,17 +310,10 @@ def iterative_expand(
             new_index = current_board.move_adj(current_index, direction)
             if current_board.get_tile(new_index) is None and new_index not in shape:
 
-
                 new_board = current_board.copy()
                 new_board.set_tile(new_index, player_colour)
                 new_shape = shape + [new_index]
                 queue.append((new_board, new_index, new_shape, depth + 1))
-
-
-                #current_board.set_tile(new_index, player_colour)
-                #new_shape = shape + [new_index]
-                #queue.append((current_board, new_index, new_shape, depth + 1))
-                #current_board.clear_tile(new_index)
 
     return all_shapes
 
@@ -345,9 +338,6 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     seen_hashes = set()
-
-    #print("Board being passed into iterative_expand from init_expand")
-    #board.bitboard_display()
     
     #all_shapes = []
     all_shapes = iterative_expand(board, start_index, player_colour)
@@ -377,10 +367,11 @@ def minimax(
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
     # Add a call to the evaluate function
     if cutoff_test(board, depth):
-        #print("\n")
-        eval_score = evaluation(board, color)
-        #print("\n")
-        #board.bitboard_display()
+
+        # Can change the coefficient we multiply each part of the utility
+        # function by
+        eval_score = evaluation(board, color, v1_coefficient=4, v6_coefficient=2)
+
         return eval_score, board, None
         
     # Check if the board state has been visited before
@@ -430,20 +421,19 @@ def min_value(board, color, depth, alpha, beta, past):
 # Will evaluate a board state and assign it a value
 def evaluation(
     board: Bitboard, 
-    colour: PlayerColor
+    colour: PlayerColor,
+    v1_coefficient: int,
+    v6_coefficient: int
 ) -> float:
 
-    # Different factor multiples
-    v1_constant = 0
-    v6_constant = 0
 
-    goodness = v1_constant * v1_minimax_util(board, colour) + v6_constant * v6_minimax_util(board, colour)
+    goodness = v1_coefficient * v1_minimax_util(board, colour) + v6_coefficient * v6_minimax_util(board, colour)
     
     return goodness
 
 # Checks if the move is a completed game(very unlikely), or we have reached our desired depth
 def cutoff_test(board, depth):
-    if depth > DEPTH_VALUE:
+    if depth > DEPTH_VALUE:             # ISSUE HERE. 
         return True
     else:
         return finished(board)
@@ -459,6 +449,19 @@ def endgame_search(board, color):
     # May not be needed as we could simply modify the heuristic 
     #TODO: Implement me
     return search(board,color)
+
+
+
+
+
+
+
+
+
+# TESTING FUNCTIONS
+
+
+
 
 def test_row_full():
     bb = Bitboard()
