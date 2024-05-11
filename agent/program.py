@@ -121,7 +121,13 @@ class Agent:
 
         place_action: PlaceAction = action
         c1, c2, c3, c4 = place_action.coords
+
+        changed_indexes = [get_index_from_coord(c1), 
+                           get_index_from_coord(c2),
+                           get_index_from_coord(c3),
+                           get_index_from_coord(c4)]
         self.board.place_four_tiles(color, c1,c2,c3,c4)
+        self.board.check_clear_filled_rowcol(changed_indexes)
 
         #print("Board after being updated")
         #self.board.bitboard_display()
@@ -130,11 +136,11 @@ class Agent:
 
 def search(board, color):
     # Minimax goes here
-    result = minimax(board, color, 0, float('-inf'), float('inf'), True)
+    result = minimax(board, color, 3, float('-inf'), float('inf'), True)
 
-    print("\n")
-    result[1].bitboard_display()
-    print("\n")
+    #print("\n")
+    #result[1].bitboard_display()
+    #print("\n")
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -170,8 +176,8 @@ def expand(
         color: PlayerColor
     ) -> list[Bitboard]:
 
-    print("")
-    board.bitboard_display()
+    #print("")
+    #board.bitboard_display()
 
     moves = []
 
@@ -277,19 +283,17 @@ def iterative_expand(
 
         if depth == 5:
             
-            print("Before clear")
-            current_board.bitboard_display()
-            current_board.check_clear_filled_rowcol(shape[1:])      # THIS IS THE ISSUE. CURRENT_BOARD DOESNT HAVE OUR NEW PIECE ON IT
-                                                                    # SO WHATEVER BOARD WE ARE RETURNING FROM MINIMAX AND UPDATING WITH 
-                                                                    # ISNT THE SAME ONE WE CHECK FOR ROW CLEARS HERE
+            #print("Before clear")
+            #current_board.bitboard_display()
+            current_board.check_clear_filled_rowcol(shape[1:]) 
             
 
             # There is something seriously wrong with this block of code.
             # Mightve fixed the rowcol deletion error, but there is an infitinite loop here????
             
 
-            print("After clear")
-            current_board.bitboard_display()
+            #print("After clear")
+            #current_board.bitboard_display()
             
             #print("Board after clearing")
             #current_board.bitboard_display()
@@ -298,7 +302,7 @@ def iterative_expand(
             if board_hash not in seen_hashes:   
                 #print("New board added")                            
                 seen_hashes.add(board_hash)
-                print(len(seen_hashes))
+                #print(len(seen_hashes))
                 all_shapes.append((current_board.copy(), shape[1:]))
             continue
 
@@ -430,8 +434,8 @@ def evaluation(
 ) -> float:
 
     # Different factor multiples
-    v1_constant = 2
-    v6_constant = 1
+    v1_constant = 0
+    v6_constant = 0
 
     goodness = v1_constant * v1_minimax_util(board, colour) + v6_constant * v6_minimax_util(board, colour)
     
