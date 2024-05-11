@@ -131,6 +131,7 @@ class Agent:
 def search(board, color):
     # Minimax goes here
     result = minimax(board, color, 0, float('-inf'), float('inf'), True)
+
     print("\n")
     result[1].bitboard_display()
     print("\n")
@@ -169,6 +170,9 @@ def expand(
         color: PlayerColor
     ) -> list[Bitboard]:
 
+    print("")
+    board.bitboard_display()
+
     moves = []
 
     # player_tiles is the list of indexes corresponding to the players tile
@@ -179,6 +183,11 @@ def expand(
         
     # For each tile, expand it
     for index in player_tiles:
+
+        #print(index)
+
+        # Correct player_tiles
+
         visited = {index}  #TODO: Implement set functionality
         all_index_placements = init_expand_from_tile(board, index, color)
         moves.extend(all_index_placements)
@@ -222,13 +231,13 @@ def expand_out_sexy_style(
     # Add all of the boards of depth 4 and return
     if depth == 5:
         
-        print("Before clear")
-        board.bitboard_display()
+        #print("Before clear")
+        #board.bitboard_display()
         # See if piece fills up rows or columns and delete them
         board.check_clear_filled_rowcol(current_shape[1:])
-        print("After clear")
+        #print("After clear")
 
-        board.bitboard_display()
+        #board.bitboard_display()
         # Hash the board and check for duplicates. If none, add the board and
         # shape as a child
         board_hash = board.get_hash()
@@ -286,7 +295,7 @@ def iterative_expand(
 
             board_hash = current_board.get_hash()
             if board_hash not in seen_hashes:   
-                print("New board added")                            
+                #print("New board added")                            
                 seen_hashes.add(board_hash)
                 all_shapes.append((current_board.copy(), shape[1:]))
             continue
@@ -330,7 +339,11 @@ def init_expand_from_tile(
 ) -> list[Bitboard]:
 
     seen_hashes = set()
+
+    #print("Board being passed into iterative_expand from init_expand")
+    #board.bitboard_display()
     
+    #all_shapes = []
     all_shapes = iterative_expand(board, start_index, player_colour)
     #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
     return all_shapes 
