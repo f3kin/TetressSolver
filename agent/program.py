@@ -252,6 +252,7 @@ def expand_out_sexy_style(
             new_shape = current_shape + [new_index]
             expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes, seen_hashes)
 
+
 def iterative_expand(
     board: Bitboard, 
     index: int, 
@@ -267,8 +268,8 @@ def iterative_expand(
 
         if depth == 5:
             
-            #print("Before clear")
-            #current_board.bitboard_display()
+            print("Before clear")
+            current_board.bitboard_display()
             current_board.check_clear_filled_rowcol(shape[1:])      # THIS IS THE ISSUE. CURRENT_BOARD DOESNT HAVE OUR NEW PIECE ON IT
                                                                     # SO WHATEVER BOARD WE ARE RETURNING FROM MINIMAX AND UPDATING WITH 
                                                                     # ISNT THE SAME ONE WE CHECK FOR ROW CLEARS HERE
@@ -278,8 +279,8 @@ def iterative_expand(
             # Mightve fixed the rowcol deletion error, but there is an infitinite loop here????
             
 
-            #print("After clear")
-            #current_board.bitboard_display()
+            print("After clear")
+            current_board.bitboard_display()
             
             #print("Board after clearing")
             #current_board.bitboard_display()
@@ -288,6 +289,7 @@ def iterative_expand(
             if board_hash not in seen_hashes:   
                 print("New board added")                            
                 seen_hashes.add(board_hash)
+                print(len(seen_hashes))
                 all_shapes.append((current_board.copy(), shape[1:]))
             continue
 
