@@ -6,6 +6,7 @@
 from collections import deque
 from typing import Tuple, Optional
 from copy import deepcopy
+from agent import Bitboard
 
 """
 Areas for improvement
@@ -30,7 +31,7 @@ OPENING = 3 # TODO Change this to another value
 END_GAME = 75
 MAX_TURN = 0
 MIN_TURN = 1
-DEPTH_VALUE = 50
+DEPTH_VALUE = 3
 
 DIRECTIONS = ["up", "down", "left", "right"]
 
@@ -107,6 +108,9 @@ class Agent:
 
         self.num_moves += 1
 
+        if self.num_moves == 4:
+            return None
+
         # If there are still possible book moves
         if self.book_moves:
             
@@ -154,7 +158,7 @@ class Agent:
 
 def search(board, color):
     # Minimax goes here
-    result = minimax(board, color, 50, float('-inf'), float('inf'), True)
+    result = minimax(board, color, 0, float('-inf'), float('inf'), True)
 
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
@@ -191,34 +195,69 @@ def expand(
         color: PlayerColor
     ) -> list[Bitboard]:
 
-    #print("")
-    #board.bitboard_display()
-
     moves = []
-
+    visited = set()
+    count = 0
     # player_tiles is the list of indexes corresponding to the players tile
     if color == PlayerColor.RED:
         player_tiles = board.get_colour_indexes(PlayerColor.RED)
+        count += 1
+        print(count)
+        print(len(player_tiles))
     else:
         player_tiles = board.get_colour_indexes(PlayerColor.BLUE)
+        print("blue")
+        print(len(player_tiles))
+
         
     # For each tile, expand it
-    for index in player_tiles:
-
-        #print(index)
-
-        # Correct player_tiles
-
-        visited = {index}  #TODO: Implement set functionality
-        all_index_placements = init_expand_from_tile(board, index, color)
-        moves.extend(all_index_placements)
-        
-    # TODO Look at this
-    # Sort children by some heuristic estimation before returning
-    #children.sort(key=lambda x: heuristic_estimate(x))
     
-    #print(moves)
+    for index in player_tiles:
+        if index in visited: #Checks we havent expanded from here already
+            continue
+        all_index_placements = iterative_expand(board, index, color) #TODO: change back to wrapper function call
+        moves.extend(all_index_placements)
+        visited.add(index) 
+        
+    #TODOL move ordering
+    #moves.sort(key=lambda x: evaluation(x[0], PlayerColor.RED, 4, 2))
+    
     return moves
+
+def iterative_expand(
+    board: Bitboard, 
+    index: int, 
+    player_colour: PlayerColor
+):
+
+    queue = deque([(board, index, [index], int(1))])
+    all_shapes = []
+    seen_hashes = set()
+
+    while queue:
+        current_board, current_index, shape, depth = queue.popleft() # Possible issue here. depth is Literal[1]?
+
+        if depth == 5:
+            
+            current_board.check_clear_filled_rowcol(shape[1:]) 
+
+            board_hash = current_board.get_hash()
+            if board_hash not in seen_hashes:   
+                seen_hashes.add(board_hash)
+                all_shapes.append((current_board.copy(), shape[1:]))
+            continue
+
+        for direction in DIRECTIONS:
+            new_index = current_board.move_adj(current_index, direction)
+            if current_board.get_tile(new_index) is None and new_index not in shape:
+
+                new_board = current_board.copy()
+                new_board.set_tile(new_index, player_colour)
+                new_shape = shape + [new_index]
+                queue.append((new_board, new_index, new_shape, depth + 1))
+
+    return all_shapes
+
 
 
 """
@@ -283,42 +322,6 @@ def expand_out_sexy_style(
             expand_out_sexy_style(new_board, new_index, player_colour, depth + 1, new_shape, all_shapes, seen_hashes)
 
 
-def iterative_expand(
-    board: Bitboard, 
-    index: int, 
-    player_colour: PlayerColor
-):
-
-    queue = deque([(board, index, [index], int(1))])
-    all_shapes = []
-    seen_hashes = set()
-
-    while queue:
-        current_board, current_index, shape, depth = queue.popleft() # Possible issue here. depth is Literal[1]?
-
-        if depth == 5:
-            
-            current_board.check_clear_filled_rowcol(shape[1:]) 
-
-            board_hash = current_board.get_hash()
-            if board_hash not in seen_hashes:   
-                seen_hashes.add(board_hash)
-                all_shapes.append((current_board.copy(), shape[1:]))
-            continue
-
-        for direction in DIRECTIONS:
-            new_index = current_board.move_adj(current_index, direction)
-            if current_board.get_tile(new_index) is None and new_index not in shape:
-
-                new_board = current_board.copy()
-                new_board.set_tile(new_index, player_colour)
-                new_shape = shape + [new_index]
-                queue.append((new_board, new_index, new_shape, depth + 1))
-
-    return all_shapes
-
-
-
 """
 Inputs:
     `board`
@@ -337,12 +340,9 @@ def init_expand_from_tile(
     player_colour: PlayerColor
 ) -> list[Bitboard]:
 
-    seen_hashes = set()
     
-    #all_shapes = []
-    all_shapes = iterative_expand(board, start_index, player_colour)
-    #expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
-    return all_shapes 
+    return iterative_expand(board, start_index, player_colour)
+    # return expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
         
 
 
@@ -365,20 +365,15 @@ def minimax(
     maximizingPlayer: bool, 
     past = {}
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
-    # Add a call to the evaluate function
+    # TODO: Move ordering via evaluation
     if cutoff_test(board, depth):
-
-        # Can change the coefficient we multiply each part of the utility
-        # function by
         eval_score = evaluation(board, color, v1_coefficient=4, v6_coefficient=2)
-
         return eval_score, board, None
         
-    # Check if the board state has been visited before
+    #TODO : most efficient, works ?
     board_key = hash(board)
     if board_key in past:
         return past[board_key]
-
     if maximizingPlayer:
         return max_value(deepcopy(board), color, depth, alpha, beta, past) #TODO: Implement clone > deepcopy
     else:
@@ -389,15 +384,14 @@ def max_value(board, color, depth, alpha, beta, past):
     best_move = None
     best_coords = None
     for child in expand(board, color): #returns a tuple (Bitboard, coords)
-        eval_score, _, coords = minimax(child[0], color, depth+1, alpha, beta, False, past)
+        eval_score, _, __ = minimax(child[0], color, depth+1, alpha, beta, False, past)
         if eval_score is not None and eval_score > maxEval:
             maxEval = eval_score
-            best_move = child[0]  # Update the best move
+            best_move = child[0]  
             best_coords = child[1]
-        alpha = max(alpha, eval_score or alpha)  # Use `alpha` if `eval_score` is None
+        alpha = max(alpha, eval_score or alpha) 
         if beta <= alpha:
             break
-    # Store maxEval, best_move in past
     past[hash(board)] = maxEval, best_move, best_coords
     return maxEval, best_move, best_coords
 
@@ -406,15 +400,14 @@ def min_value(board, color, depth, alpha, beta, past):
     best_move = None
     best_coords = None
     for child in expand(board, color):
-        eval_score, _, coords = minimax(child[0], color, depth+1, alpha, beta, True, past)
+        eval_score, _, __ = minimax(child[0], color, depth+1, alpha, beta, True, past)
         if eval_score is not None and eval_score < minEval:
             minEval = eval_score
             best_move = child[0]
             best_coords = child[1]
-        beta = min(beta, eval_score or beta)  # Use `beta` if `eval_score` is None
+        beta = min(beta, eval_score or beta)
         if beta <= alpha:
             break
-    # Store minEval, best_move in past
     past[hash(board)] = minEval, best_move, best_coords
     return minEval, best_move, best_coords
 
@@ -433,7 +426,10 @@ def evaluation(
 
 # Checks if the move is a completed game(very unlikely), or we have reached our desired depth
 def cutoff_test(board, depth):
-    if depth > DEPTH_VALUE:             # ISSUE HERE. 
+    if depth > DEPTH_VALUE:  
+        # print("\n")
+        # board.bitboard_display()   
+        # print("\n")      
         return True
     else:
         return finished(board)
