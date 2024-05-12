@@ -59,15 +59,15 @@ class Bitboard:
 	def set_tile(
 		self,
 		index: int,
-		colour: PlayerColor
+		isRed: bool
 	):
 		# On the players board, bitwise OR their board with a a mask of
 		# a board with only the index tile switched on
-		if colour == PlayerColor.RED:
+		if isRed:
 			self.red_board |= (1 << index)
-		elif colour == PlayerColor.BLUE:
+		else:
 			self.blue_board |= (1 << index) 
-		
+		#TODO: COULD BE AN ISSUE COS I CHANGE FROM ELIF TO ELSE
 
 	"""
 	Input:
@@ -384,10 +384,13 @@ class Bitboard:
 		index4 = get_index_from_coord(c4)
 
 		# Call set_tile 4 times with the 4 different indexes	
-		self.set_tile(index1, colour)
-		self.set_tile(index2, colour)
-		self.set_tile(index3, colour)
-		self.set_tile(index4, colour)
+		isRed = False
+		if colour == PlayerColor.RED:
+			isRed = True
+		self.set_tile(index1, isRed)
+		self.set_tile(index2, isRed)
+		self.set_tile(index3, isRed)
+		self.set_tile(index4, isRed)
 
 	def get_hash(
 		self

@@ -199,18 +199,11 @@ def expand(
 
     moves = []
     visited = set()
-    count = 0
     # player_tiles is the list of indexes corresponding to the players tile
     if isRed:
         player_tiles = board.get_colour_indexes(PlayerColor.RED)
-        count += 1 #TODO: NEVER GETS PAST 1
-        print(count)
-        print(len(player_tiles))
     else:
         player_tiles = board.get_colour_indexes(PlayerColor.BLUE)
-        print("blue")
-        print(len(player_tiles))
-
         
     # For each tile, expand it
     
@@ -254,7 +247,7 @@ def iterative_expand(
             if current_board.get_tile(new_index) is None and new_index not in shape:
 
                 new_board = current_board.copy()
-                new_board.set_tile(new_index, player_colour)
+                new_board.set_tile(new_index, isRed)
                 new_shape = shape + [new_index]
                 queue.append((new_board, new_index, new_shape, depth + 1))
 
@@ -422,16 +415,13 @@ def evaluation(
 ) -> float:
 
 
-    goodness = v1_coefficient * v1_minimax_util(board, isRed) + v6_coefficient * v6_minimax_util(board, isRed)
+    goodness = v1_coefficient * v1_minimax_util(board, not isRed) + v6_coefficient * v6_minimax_util(board, not isRed)
     
     return goodness
 
 # Checks if the move is a completed game(very unlikely), or we have reached our desired depth
 def cutoff_test(board, depth):
     if depth > DEPTH_VALUE:  
-        # print("\n")
-        # board.bitboard_display()   
-        # print("\n")      
         return True
     else:
         return finished(board)
