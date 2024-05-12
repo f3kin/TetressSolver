@@ -194,14 +194,14 @@ Desc: Takes a board and color, finds the tiles on the board of that color, and
 
 def expand(
         board: Bitboard,
-        color: PlayerColor
+        isRed: bool,
     ) -> list[Bitboard]:
 
     moves = []
     visited = set()
     count = 0
     # player_tiles is the list of indexes corresponding to the players tile
-    if color == PlayerColor.RED:
+    if isRed:
         player_tiles = board.get_colour_indexes(PlayerColor.RED)
         count += 1 #TODO: NEVER GETS PAST 1
         print(count)
@@ -217,7 +217,7 @@ def expand(
     for index in player_tiles:
         if index in visited: #Checks we havent expanded from here already
             continue
-        all_index_placements = iterative_expand(board, index, color) #TODO: change back to wrapper function call
+        all_index_placements = iterative_expand(board, index, isRed) #TODO: change back to wrapper function call
         moves.extend(all_index_placements)
         visited.add(index) 
         
@@ -229,7 +229,7 @@ def expand(
 def iterative_expand(
     board: Bitboard, 
     index: int, 
-    player_colour: PlayerColor
+    isRed: bool
 ):
 
     queue = deque([(board, index, [index], int(1))])
