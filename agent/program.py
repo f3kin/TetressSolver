@@ -157,9 +157,11 @@ class Agent:
         #print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
 def search(board, color):
+    if color == PlayerColor.RED:
     # Minimax goes here
-    result = minimax(board, color, 0, float('-inf'), float('inf'), True)
-
+        result = minimax(board, True, 0, float('-inf'), float('inf'), True)
+    else:
+        result = minimax(board, False, 0, float('-inf'), float('inf'), True)
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -201,7 +203,7 @@ def expand(
     # player_tiles is the list of indexes corresponding to the players tile
     if color == PlayerColor.RED:
         player_tiles = board.get_colour_indexes(PlayerColor.RED)
-        count += 1
+        count += 1 #TODO: NEVER GETS PAST 1
         print(count)
         print(len(player_tiles))
     else:
@@ -358,7 +360,7 @@ def init_expand_from_tile(
     
 def minimax(
     board: Bitboard, 
-    color: PlayerColor,
+    isRed: bool,
     depth: int, 
     alpha: int, 
     beta: int, 
@@ -367,24 +369,24 @@ def minimax(
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
     # TODO: Move ordering via evaluation
     if cutoff_test(board, depth):
-        eval_score = evaluation(board, color, v1_coefficient=4, v6_coefficient=2)
+        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
         return eval_score, board, None
         
     #TODO : most efficient, works ?
-    board_key = hash(board)
+    board_key = board.get_hash()
     if board_key in past:
         return past[board_key]
     if maximizingPlayer:
-        return max_value(deepcopy(board), color, depth, alpha, beta, past) #TODO: Implement clone > deepcopy
+        return max_value(deepcopy(board), isRed, depth, alpha, beta, past) #TODO: Implement clone > deepcopy
     else:
-        return min_value(deepcopy(board), color, depth, alpha, beta, past)
+        return min_value(deepcopy(board), isRed, depth, alpha, beta, past)
 
-def max_value(board, color, depth, alpha, beta, past):
+def max_value(board, isRed, depth, alpha, beta, past):
     maxEval = float('-inf')
     best_move = None
     best_coords = None
-    for child in expand(board, color): #returns a tuple (Bitboard, coords)
-        eval_score, _, __ = minimax(child[0], color, depth+1, alpha, beta, False, past)
+    for child in expand(board, isRed): #returns a tuple (Bitboard, coords)
+        eval_score, _, __ = minimax(child[0], isRed, depth+1, alpha, beta, False, past)
         if eval_score is not None and eval_score > maxEval:
             maxEval = eval_score
             best_move = child[0]  
@@ -392,15 +394,15 @@ def max_value(board, color, depth, alpha, beta, past):
         alpha = max(alpha, eval_score or alpha) 
         if beta <= alpha:
             break
-    past[hash(board)] = maxEval, best_move, best_coords
+    past[board.get_hash()] = maxEval, best_move, best_coords
     return maxEval, best_move, best_coords
 
-def min_value(board, color, depth, alpha, beta, past):
+def min_value(board, isRed, depth, alpha, beta, past):
     minEval = float('inf')
     best_move = None
     best_coords = None
-    for child in expand(board, color):
-        eval_score, _, __ = minimax(child[0], color, depth+1, alpha, beta, True, past)
+    for child in expand(board, isRed):
+        eval_score, _, __ = minimax(child[0], isRed, depth+1, alpha, beta, True, past)
         if eval_score is not None and eval_score < minEval:
             minEval = eval_score
             best_move = child[0]
@@ -408,19 +410,19 @@ def min_value(board, color, depth, alpha, beta, past):
         beta = min(beta, eval_score or beta)
         if beta <= alpha:
             break
-    past[hash(board)] = minEval, best_move, best_coords
+    past[board.get_hash()] = minEval, best_move, best_coords
     return minEval, best_move, best_coords
 
 # Will evaluate a board state and assign it a value
 def evaluation(
     board: Bitboard, 
-    colour: PlayerColor,
+    isRed: bool,
     v1_coefficient: int,
     v6_coefficient: int
 ) -> float:
 
 
-    goodness = v1_coefficient * v1_minimax_util(board, colour) + v6_coefficient * v6_minimax_util(board, colour)
+    goodness = v1_coefficient * v1_minimax_util(board, isRed) + v6_coefficient * v6_minimax_util(board, isRed)
     
     return goodness
 

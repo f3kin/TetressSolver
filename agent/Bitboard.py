@@ -65,7 +65,7 @@ class Bitboard:
 		# a board with only the index tile switched on
 		if colour == PlayerColor.RED:
 			self.red_board |= (1 << index)
-		else:
+		elif colour == PlayerColor.BLUE:
 			self.blue_board |= (1 << index) 
 		
 
