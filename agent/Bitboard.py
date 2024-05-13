@@ -389,21 +389,19 @@ class Bitboard:
 			adjacent_found = True
 
 		for index in indexes:
-
-			# Tile overlap
-			if(self.red_board | self.blue_board) & (1 << index):
+			if (self.red_board | self.blue_board) & (1 << index):
 				return False
-			
+		
+		for index in indexes:
 			if adjacent_found:
 				return True
-
-			adjacent_indexes= [
+			
+			adjacent_indexes = [
 				self.move_adj(index, 'up'),
 				self.move_adj(index, 'down'),
 				self.move_adj(index, 'left'),
 				self.move_adj(index, 'right'),
 			]
-
 			for adj_index in adjacent_indexes:
 				if player_board & (1 << adj_index):
 					adjacent_found = True

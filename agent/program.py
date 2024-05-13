@@ -5,7 +5,7 @@
 # Depends entirely on if we can use deque
 from collections import deque
 from typing import Tuple, Optional
-from agent import Bitboard
+from agent.Bitboard import Bitboard
 
 """
 Areas for improvement
@@ -49,39 +49,19 @@ class Agent:
         self.num_moves = -1
         self.state = OPENING
         if self._color is PlayerColor.RED:
-            self.book_moves = [PlaceAction(
-                        Coord(0, 0), 
-                        Coord(1, 0), 
-                        Coord(2, 0), 
-                        Coord(3, 0)
-                    ), PlaceAction(
-                        Coord(3,1),
-                        Coord(4,1),
-                        Coord(5,1),
-                        Coord(6,1)
-                    ), PlaceAction(
-                        Coord(6,2),
-                        Coord(7,2),
-                        Coord(8,2),
-                        Coord(9,2)
-                    )]
+            self.book_moves = [PlaceAction(Coord(1,1), Coord(2,1), Coord(2,2), Coord(2,3)
+                                ),PlaceAction(Coord(3,3), Coord(4,3), Coord(4,4), Coord(5,4)
+                                ),PlaceAction(Coord(5,5), Coord(6,5), Coord(6,6), Coord(7,6)
+                                ),PlaceAction(Coord(7,7), Coord(8,7), Coord(8,8), Coord(9,8)
+                                ),PlaceAction(Coord(9,9), Coord(10,9), Coord(10,10), Coord(0,10)
+                                )]
         else:
-            self.book_moves = [PlaceAction( 
-                        Coord(0, 10), 
-                        Coord(1, 10), 
-                        Coord(2, 10), 
-                        Coord(3, 10)
-                    ), PlaceAction(
-                        Coord(3,9),
-                        Coord(4,9),
-                        Coord(5,9),
-                        Coord(6,9)
-                    ), PlaceAction(
-                        Coord(6,8),
-                        Coord(7,8),
-                        Coord(8,8),
-                        Coord(9,8)
-                    )]
+            self.book_moves = [PlaceAction(Coord(1,9), Coord(2,9), Coord(2,8), Coord(3,8)
+                                ),PlaceAction(Coord(3,7), Coord(4,7), Coord(4,6), Coord(5,6)
+                                ),PlaceAction(Coord(5,5), Coord(6,5), Coord(6,4), Coord(7,4)
+                                ),PlaceAction(Coord(7,3), Coord(8,3), Coord(8,2), Coord(9,2)
+                                ),PlaceAction(Coord(9,1), Coord(10,1), Coord(10,0), Coord(0,0)
+                                )]
         match color:
             case PlayerColor.RED:
                 print("Testing: I am playing as RED")
@@ -99,26 +79,27 @@ class Agent:
         # If there are still possible book moves
         if self.book_moves:
             
-            # Cycle through from start of moves
-            for i in range(len(self.book_moves)):
+            valid_move = None
 
-                # Check if the move is valid, if so, play it.
-                # If not, check next move
-                move = self.book_moves[i]
+            for move in self.book_moves:
+                
                 book_move_indexes = [get_index_from_coord(move.c1), 
                                     get_index_from_coord(move.c2),
                                     get_index_from_coord(move.c3),
                                     get_index_from_coord(move.c4)]
                 
                 if self.board.valid_book_move(book_move_indexes, self._color, self.num_moves):
-                    self.book_moves.pop(i)
-                    return move
+                    valid_move = move
+
+                    break
+
+            if valid_move:
+                self.book_moves.remove(valid_move)
+                return valid_move
 
         # If there are no more book moves, move onto search
-        elif self.num_moves < END_GAME:
-            return search(self.board, self._color, self.num_moves) 
-        else:
-            return endgame_search(self.board, self._color)
+        return search(self.board, self._color, self.num_moves) 
+        
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
