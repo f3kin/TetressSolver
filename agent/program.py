@@ -163,6 +163,7 @@ def search(board, color, num_moves):
         result = minimax(board, False, 0, float('-inf'), float('inf'), True, num_moves)
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
+    print(result[0])
     return action
 
 
@@ -205,7 +206,7 @@ def expand(
         player_tiles = board.get_colour_indexes(PlayerColor.BLUE)
         
     # For each tile, expand it
-    
+
     for index in player_tiles:
         if index in visited: #Checks we havent expanded from here already
             continue
@@ -251,6 +252,98 @@ def iterative_expand(
                 queue.append((new_board, new_index, new_shape, depth + 1))
 
     return all_shapes
+
+def minimax(
+    board: Bitboard, 
+    isRed: bool,
+    depth: int, 
+    alpha: int, 
+    beta: int, 
+    maximizingPlayer: bool, 
+    num_moves: int,
+    past = {}
+) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
+    # TODO: Move ordering via evaluation
+    #TODO : most efficient, works ?
+    board_key = board.get_hash()
+    if board_key in past:
+        return past[board_key]
+    if maximizingPlayer:
+        # print("\n")
+        # board.bitboard_display()
+        # print("\n")
+        return max_value(board.copy(), isRed, depth, alpha, beta, num_moves, past) #TODO: Implement clone > deepcopy
+        
+    else:
+        # print("\n")
+        # board.bitboard_display()
+        # print("\n")
+        return min_value(board.copy(), isRed, depth, alpha, beta, num_moves, past)
+
+#TODO: Pass beta properly so it is updated
+def max_value(board, isRed, depth, alpha, beta, num_moves, past):
+    maxEval = float('-inf')
+    best_move = None
+    best_coords = None
+    if cutoff_test(depth, num_moves):
+        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
+        return eval_score, board, None
+    for child in expand(board, isRed): #returns a tuple (Bitboard, coords)
+        eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, False, num_moves, past) 
+        if eval_score is not None and eval_score > maxEval:
+            maxEval = eval_score
+            best_move = child[0]  
+            best_coords = child[1]
+        alpha = max(alpha, maxEval) 
+        beta = min(beta, eval_score)
+        print("beta: " + str(beta))
+        if beta <= alpha:
+            print("pruned")
+            maxEval = beta
+            break
+    past[board.get_hash()] = maxEval, best_move, best_coords
+    return maxEval, best_move, best_coords
+
+
+def min_value(board, isRed, depth, alpha, beta, num_moves, past):
+    minEval = float('inf')
+    best_move = None
+    best_coords = None
+    # print("\n")
+    # board.bitboard_display()
+    # print("\n")
+    if cutoff_test(depth, num_moves):
+        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
+        return eval_score, board, None
+        
+    for child in expand(board, isRed):
+        eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, True,num_moves, past)
+        if eval_score is not None and eval_score < minEval:
+            minEval = eval_score
+            best_move = child[0]
+            best_coords = child[1]
+        alpha = max(alpha, minEval) 
+        beta = min(beta, eval_score)
+        print("beta: " + str(beta))
+        if beta <= alpha:
+            # print("\n")
+            # child[0].bitboard_display()
+            # print("\n")
+            minEval = alpha
+            #print("pruned")
+            break
+    past[board.get_hash()] = minEval, best_move, best_coords
+    return minEval, best_move, best_coords
+
+# Checks if the move is a completed game(very unlikely), or we have reached our desired depth
+def cutoff_test(depth, num_moves):
+    #print(depth)
+    if num_moves < 30:
+        comp = 1
+    else: 
+        comp = DEPTH_VALUE
+    if depth > comp:  
+        return True
 
 
 
@@ -350,68 +443,7 @@ def init_expand_from_tile(
 #         self.value = value
 #         self.board = board
     
-def minimax(
-    board: Bitboard, 
-    isRed: bool,
-    depth: int, 
-    alpha: int, 
-    beta: int, 
-    maximizingPlayer: bool, 
-    num_moves: int,
-    past = {}
-) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
-    # TODO: Move ordering via evaluation
-    if cutoff_test(board, depth, num_moves):
-        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
-        return eval_score, board, None
-        
-    #TODO : most efficient, works ?
-    board_key = board.get_hash()
-    if board_key in past:
-        return past[board_key]
-    if maximizingPlayer:
-        #print("\n")
-        #board.bitboard_display()
-        #print("\n")
-        return max_value(board.copy(), isRed, depth, alpha, beta, num_moves, past) #TODO: Implement clone > deepcopy
-        
-    else:
-        #print("\n")
-        #board.bitboard_display()
-       # print("\n")
-        return min_value(board.copy(), not isRed, depth, alpha, beta, num_moves, past)
-
-def max_value(board, isRed, depth, alpha, beta, num_moves, past):
-    maxEval = float('-inf')
-    best_move = None
-    best_coords = None
-    for child in expand(board, isRed): #returns a tuple (Bitboard, coords)
-        eval_score, _, __ = minimax(child[0], isRed, depth+1, alpha, beta, False, num_moves, past)
-        if eval_score is not None and eval_score > maxEval:
-            maxEval = eval_score
-            best_move = child[0]  
-            best_coords = child[1]
-        alpha = max(alpha, eval_score or alpha) 
-        if beta <= alpha:
-            break
-    past[board.get_hash()] = maxEval, best_move, best_coords
-    return maxEval, best_move, best_coords
-
-def min_value(board, isRed, depth, alpha, beta, num_moves, past):
-    minEval = float('inf')
-    best_move = None
-    best_coords = None
-    for child in expand(board, isRed):
-        eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, True,num_moves, past)
-        if eval_score is not None and eval_score < minEval:
-            minEval = eval_score
-            best_move = child[0]
-            best_coords = child[1]
-        beta = min(beta, eval_score or beta)
-        if beta <= alpha:
-            break
-    past[board.get_hash()] = minEval, best_move, best_coords
-    return minEval, best_move, best_coords
+## PUT MINIMAX BACK HERE
 
 # Will evaluate a board state and assign it a value
 def evaluation(
@@ -426,22 +458,6 @@ def evaluation(
     
     return goodness
 
-# Checks if the move is a completed game(very unlikely), or we have reached our desired depth
-def cutoff_test(board, depth, num_moves):
-    if num_moves < 10:
-        comp = 1
-    else: 
-        comp = DEPTH_VALUE
-    if depth > comp:  
-        return True
-    else:
-        return finished(board)
-
-#Simply checks if the game is over
-def finished(board):
-    #TODO: implement me
-    return False
-        
 
 #returns the best move based on an end game scenario
 def endgame_search(board, color):

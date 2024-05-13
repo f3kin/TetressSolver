@@ -40,9 +40,11 @@ def v1_minimax_util(
 	# Need to normalise this value. I suppose the maximum ratio would be 121:0,
 	# so for now we will divide by 121
 	if is_blue_turn:
-		return (blue_counts/red_counts)/(BOARD_N **2)
+		#print((blue_counts/red_counts)/(BOARD_N))
+		return (blue_counts/red_counts)/(BOARD_N)
 	else:
-		return (red_counts/blue_counts)/(BOARD_N ** 2)
+		#print((red_counts/blue_counts)/(BOARD_N ))
+		return (red_counts/blue_counts)/(BOARD_N)
 
 
 """
