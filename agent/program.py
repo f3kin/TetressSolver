@@ -57,20 +57,65 @@ class Agent:
         if self._color is PlayerColor.RED:
             # Create these book moves. Try and place these moves on first 3 turns. If no moves can be made, then need to do normal search
             self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
-                        Coord(0, 0), 
-                        Coord(1, 0), 
-                        Coord(2, 0), 
-                        Coord(3, 0)
+                        Coord(1, 1), 
+                        Coord(2, 1), 
+                        Coord(2, 2), 
+                        Coord(3, 2)
                     ), PlaceAction(
-                        Coord(3,1),
-                        Coord(4,1),
-                        Coord(5,1),
-                        Coord(6,1)
+                        Coord(3,3),
+                        Coord(4,3),
+                        Coord(4,4),
+                        Coord(5,4)
                     ), PlaceAction(
-                        Coord(6,2),
-                        Coord(7,2),
+                        Coord(5,5),
+                        Coord(6,5),
+                        Coord(6,6),
+                        Coord(7,6)
+                    ),PlaceAction(
+                        Coord(7,7),
+                        Coord(8,7),
+                        Coord(8,8),
+                        Coord(9,8)
+                    ),PlaceAction(
+                        Coord(9,9),
+                        Coord(10,9),
+                        Coord(10,10),
+                        Coord(0,10)
+                    ),PlaceAction(
+                        Coord(0,0),
+                        Coord(0,1),
+                        Coord(0,2),
+                        Coord(0,3)
+                    ),PlaceAction(
+                        Coord(7,5),
+                        Coord(8,5),
+                        Coord(9,5),
+                        Coord(10,5)
+                    ),PlaceAction(
+                        Coord(0,4),
+                        Coord(0,5),
+                        Coord(1,5),
+                        Coord(2,5)
+                    ),PlaceAction(
+                        Coord(2,6),
+                        Coord(2,7),
+                        Coord(3,7),
+                        Coord(4,7)
+                    ),PlaceAction(
+                        Coord(4,8),
+                        Coord(4,9),
+                        Coord(5,9),
+                        Coord(6,9)
+                    ),PlaceAction(
+                        Coord(6,10),
+                        Coord(6,0),
+                        Coord(7,0),
+                        Coord(8,0)
+                    ),PlaceAction(
+                        Coord(8,1),
                         Coord(8,2),
-                        Coord(9,2)
+                        Coord(9,2),
+                        Coord(10,2)
                     )]
         else:
             self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
@@ -100,15 +145,7 @@ class Agent:
         This method is called by the referee each time it is the agent's turn
         to take an action. It must always return an action object. 
         """
-
-        ##test_full_column()
-        #test_row_full()
-        #return 0
-
         self.num_moves += 1
-
-        # if self.num_moves == 4:
-        #     return None
 
         # If there are still possible book moves
         if self.book_moves:
@@ -124,11 +161,17 @@ class Agent:
                                     get_index_from_coord(move.c3),
                                     get_index_from_coord(move.c4)]
                 
+                print(book_move_indexes)
+
                 if self.board.valid_book_move(book_move_indexes, self._color, self.num_moves):
+                    print("Is a valid book move")
                     self.book_moves.pop(i)
                     return move
-
-        # If there are no more book moves, move onto search
+                print("Is not a valid book move")
+            self.book_moves = None
+            move = None
+            return search(self.board, self._color, self.num_moves)
+        
         elif self.num_moves < END_GAME:
             return search(self.board, self._color, self.num_moves) 
         else:
@@ -158,9 +201,16 @@ class Agent:
 def search(board, color, num_moves):
     if color == PlayerColor.RED:
     # Minimax goes here
+
+        print("Here")
         result = minimax(board, True, 0, float('-inf'), float('inf'), True, num_moves)
     else:
+        print("Or Here")
+
         result = minimax(board, False, 0, float('-inf'), float('inf'), True, num_moves)
+
+    print(result[2])
+    
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -363,7 +413,7 @@ def minimax(
     # TODO: Move ordering via evaluation
     if cutoff_test(board, depth, num_moves):
         eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
-        return eval_score, board, None
+        return eval_score, board, None    # Think the issue is here. Returning no action
         
     #TODO : most efficient, works ?
     board_key = board.get_hash()
@@ -449,95 +499,3 @@ def endgame_search(board, color):
     #TODO: Implement me
     return search(board,color)
 
-
-
-
-
-
-
-
-
-# TESTING FUNCTIONS
-
-
-
-
-def test_row_full():
-    bb = Bitboard()
-    test_row = 1  # Testing the third row
-
-    # Set all bits in the test_row
-    for i in range(test_row * BOARD_N, (test_row + 1) * BOARD_N):
-        bb.set_tile(i, PlayerColor.RED)
-
-
-    bb.bitboard_display()
-
-    bb.check_clear_filled_rowcol([12])
-    # Print expected and actual masks
-    full_board = bb.red_board | bb.blue_board
-    row_mask = bb.row_masks[test_row]
-    masked_row_board = full_board & row_mask
-
-    print("Expected row_mask:", bin(row_mask))
-    print("Actual masked_row_board:", bin(masked_row_board))
-
-    if masked_row_board == row_mask:
-        print("Test passed: Row is correctly full.")
-    else:
-        print("Test failed: Row is not detected as full.")
-
-    # Optional: Print the board to visually verify
-    bb.bitboard_display()
-
-
-def test_full_column():
-    bb = Bitboard()
-    test_column = 1  # Change this index to test different columns
-
-    # Set all bits in the test_column across all rows
-    for i in range(test_column, BOARD_N * BOARD_N, BOARD_N):
-        bb.set_tile(i, PlayerColor.RED)  # Assume setting RED for simplicity
-    
-    
-    bb.set_tile(120, PlayerColor.RED)
-
-
-    bb.bitboard_display()
-
-
-    full_board = bb.red_board | bb.blue_board
-    col_mask = bb.col_masks[test_column]
-    masked_col_board = full_board & col_mask
-    print("Full board before clearing:             ", bin(full_board))
-    print("Expected column_mask before clearing:            ", bin(col_mask))
-    print("Actual masked_col_board before clearing:         ", bin(masked_col_board))
-
-    if masked_col_board == col_mask:
-        print("fIRST Test passed: Column is correctly full.")
-    else:
-        print("First Test failed: Column is not detected as full.")
-
-    # Now manually call the check function
-    #print(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
-    bb.check_clear_filled_rowcol(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
-
-    # Print expected and actual masks
-    full_board = bb.red_board | bb.blue_board
-    col_mask = bb.col_masks[test_column]
-    masked_col_board = full_board & col_mask
-
-    print("Full board after clearing:              ", bin(full_board))
-    print("Expected column_mask after clearing:             ", bin(col_mask))
-    print("Actual masked_col_board after clearing: ", bin(masked_col_board))
-
-
-    # this will return fail, but that is correct, because the masked_col_board, eg the board & the col_mask should be 0
-    # after the col mask is cleared from the board
-    if masked_col_board == col_mask:
-        print("Second Test passed: Column is correctly full.")
-    else:
-        print("Second Test failed: Column is not detected as full.")
-
-    # Optional: Print the board to visually verify
-    bb.bitboard_display()
