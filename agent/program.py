@@ -5,7 +5,6 @@
 # Depends entirely on if we can use deque
 from collections import deque
 from typing import Tuple, Optional
-from copy import deepcopy
 from agent import Bitboard
 
 """
@@ -131,7 +130,7 @@ class Agent:
 
         # If there are no more book moves, move onto search
         elif self.num_moves < END_GAME:
-            return search(self.board, self._color) 
+            return search(self.board, self._color, self.num_moves) 
         else:
             return endgame_search(self.board, self._color)
 
@@ -156,12 +155,12 @@ class Agent:
 
         #print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
-def search(board, color):
+def search(board, color, num_moves):
     if color == PlayerColor.RED:
     # Minimax goes here
-        result = minimax(board, True, 0, float('-inf'), float('inf'), True)
+        result = minimax(board, True, 0, float('-inf'), float('inf'), True, num_moves)
     else:
-        result = minimax(board, False, 0, float('-inf'), float('inf'), True)
+        result = minimax(board, False, 0, float('-inf'), float('inf'), True, num_moves)
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -370,9 +369,16 @@ def minimax(
     if board_key in past:
         return past[board_key]
     if maximizingPlayer:
-        return max_value(deepcopy(board), isRed, depth, alpha, beta, past) #TODO: Implement clone > deepcopy
+        print("\n")
+        board.bitboard_display()
+        print("\n")
+        return max_value(board.copy(), isRed, depth, alpha, beta, past) #TODO: Implement clone > deepcopy
+        
     else:
-        return min_value(deepcopy(board), isRed, depth, alpha, beta, past)
+        print("\n")
+        board.bitboard_display()
+        print("\n")
+        return min_value(board.copy(), not isRed, depth, alpha, beta, past)
 
 def max_value(board, isRed, depth, alpha, beta, past):
     maxEval = float('-inf')
@@ -395,7 +401,7 @@ def min_value(board, isRed, depth, alpha, beta, past):
     best_move = None
     best_coords = None
     for child in expand(board, isRed):
-        eval_score, _, __ = minimax(child[0], isRed, depth+1, alpha, beta, True, past)
+        eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, True, past)
         if eval_score is not None and eval_score < minEval:
             minEval = eval_score
             best_move = child[0]

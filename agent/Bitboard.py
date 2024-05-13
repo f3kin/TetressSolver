@@ -244,8 +244,8 @@ class Bitboard:
 		# Get the corresponding board of the current player
 		if color == PlayerColor.RED:
 			temp = self.red_board
-			print(bin(temp))
-			print(bin(self.blue_board))
+			#print(bin(temp))
+			#print(bin(self.blue_board))
 		else:
 			temp = self.blue_board
 
