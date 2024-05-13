@@ -916,8 +916,6 @@ def v3_minimax_util(
 	board: Bitboard,
 	is_blue_turn: bool
 ) -> float: 
-	
-	from agent.program import expand
 
 	
 	is_red_turn = not is_blue_turn
@@ -939,9 +937,6 @@ def v5_minimax_util(
 	board: Bitboard,
 	is_blue_turn: bool
 ) -> float:
-	
-	from agent.program import expand
-
 	
 	possible_moves = expand(board, is_blue_turn)
 
