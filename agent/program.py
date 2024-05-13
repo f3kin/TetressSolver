@@ -30,13 +30,12 @@ OPENING = 3 # TODO Change this to another value
 END_GAME = 75
 MAX_TURN = 0
 MIN_TURN = 1
-DEPTH_VALUE = 3
+DEPTH_VALUE = 5
 
 DIRECTIONS = ["up", "down", "left", "right"]
 
 from referee.game import PlayerColor, Action, PlaceAction, Coord
 from agent.Bitboard import *
-from agent.utility_functions import *
 
 
 class Agent:
@@ -265,6 +264,8 @@ def minimax(
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
     # TODO: Move ordering via evaluation
     #TODO : most efficient, works ?
+    print("Depth of minimax = " + str(depth))
+
     board_key = board.get_hash()
     if board_key in past:
         return past[board_key]
@@ -286,7 +287,7 @@ def max_value(board, isRed, depth, alpha, beta, num_moves, past):
     best_move = None
     best_coords = None
     if cutoff_test(depth, num_moves):
-        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
+        eval_score = evaluation(board, isRed, v1_coefficient=10, v3_coefficient=5, v5_coefficient=5, v6_coefficient=2)
         return eval_score, board, None
     for child in expand(board, isRed): #returns a tuple (Bitboard, coords)
         eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, False, num_moves, past) 
@@ -296,9 +297,9 @@ def max_value(board, isRed, depth, alpha, beta, num_moves, past):
             best_coords = child[1]
         alpha = max(alpha, maxEval) 
         beta = min(beta, eval_score)
-        print("beta: " + str(beta))
+        #print("beta: " + str(beta))
         if beta <= alpha:
-            print("pruned")
+            #print("pruned")
             maxEval = beta
             break
     past[board.get_hash()] = maxEval, best_move, best_coords
@@ -313,7 +314,7 @@ def min_value(board, isRed, depth, alpha, beta, num_moves, past):
     # board.bitboard_display()
     # print("\n")
     if cutoff_test(depth, num_moves):
-        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
+        eval_score = evaluation(board, isRed, v1_coefficient=10, v3_coefficient=5, v5_coefficient=5, v6_coefficient=2)
         return eval_score, board, None
         
     for child in expand(board, isRed):
@@ -324,7 +325,7 @@ def min_value(board, isRed, depth, alpha, beta, num_moves, past):
             best_coords = child[1]
         alpha = max(alpha, minEval) 
         beta = min(beta, eval_score)
-        print("beta: " + str(beta))
+        #print("beta: " + str(beta))
         if beta <= alpha:
             # print("\n")
             # child[0].bitboard_display()
@@ -338,7 +339,7 @@ def min_value(board, isRed, depth, alpha, beta, num_moves, past):
 # Checks if the move is a completed game(very unlikely), or we have reached our desired depth
 def cutoff_test(depth, num_moves):
     #print(depth)
-    if num_moves < 30:
+    if num_moves < 10:
         comp = 1
     else: 
         comp = DEPTH_VALUE
@@ -450,12 +451,22 @@ def evaluation(
     board: Bitboard, 
     isRed: bool,
     v1_coefficient: int,
+    v3_coefficient: int,
+    v5_coefficient: int,
     v6_coefficient: int
 ) -> float:
 
+    is_blue_turn = not isRed
+    red_blue_ration = v1_minimax_util(board, is_blue_turn)
+    opp_branching_factor = v3_minimax_util(board, is_blue_turn)
+    player_branching_factor = v5_minimax_util(board, is_blue_turn)
+    rows_cols_filled = v6_minimax_util(board, is_blue_turn)
 
-    goodness = v1_coefficient * v1_minimax_util(board, not isRed) + v6_coefficient * v6_minimax_util(board, not isRed)
-    
+    goodness = (v1_coefficient * red_blue_ration +
+                v3_coefficient * opp_branching_factor +
+                v5_coefficient * player_branching_factor +
+                v6_coefficient * rows_cols_filled)
+
     return goodness
 
 
@@ -470,90 +481,129 @@ def endgame_search(board, color):
 
 
 
+# Utility functions
+"""
+Minimax utility function - 1
+
+
+Factors Considered:
+	- Red vs Blue Ratio
+
+Notes:
+Scalar constant of this function should increase close to the end of the game.
+Meaning that late game, we prioritise placing pieces to have most tiles in end.
+However, we might need two different functions for this, because I suspect
+red vs blue ratio will be important early game too. So we don't want a low
+multiplier for early game and thus the factor is not really considered
+"""
+def v1_minimax_util(
+	bitboard: Bitboard,
+	is_blue_turn: bool
+) -> float:
+
+	# Get the number of red tiles and the number of blue tiles using bitboard
+	# count_tiles function
+	red_counts = bitboard.count_tiles(bitboard.red_board)
+	blue_counts = bitboard.count_tiles(bitboard.blue_board)
+	
+	# Return calling_players_tilecount/opp_player_tilecount. The higher the
+	# number, the better move it is
+
+
+	# Need to normalise this value. I suppose the maximum ratio would be 121:0,
+	# so for now we will divide by 121
+	if is_blue_turn:
+		#print((blue_counts/red_counts)/(BOARD_N))
+		return (blue_counts/red_counts)/(BOARD_N)
+	else:
+		#print((red_counts/blue_counts)/(BOARD_N ))
+		return (red_counts/blue_counts)/(BOARD_N)
 
 
 
-# TESTING FUNCTIONS
+"""
+Minimax utility function - 3
 
+Factors Considered:
+	- Exact opponent branching factor
 
+Notes:
+Way more computationally expensive than v2, but should give a better result
+"""
+def v3_minimax_util(
+	board: Bitboard,
+	is_blue_turn: bool
+) -> float: 
+	
+	from agent.program import expand
 
+	
+	is_red_turn = not is_blue_turn
 
-def test_row_full():
-    bb = Bitboard()
-    test_row = 1  # Testing the third row
+	possible_moves = expand(board, is_red_turn)
+	return len(possible_moves)/2500
 
-    # Set all bits in the test_row
-    for i in range(test_row * BOARD_N, (test_row + 1) * BOARD_N):
-        bb.set_tile(i, PlayerColor.RED)
+"""
+Minimax utility function - 5
 
+Factors Considered:
+	- Exact agent branching factor
 
-    bb.bitboard_display()
+Notes:
+Calculated before opponent makes moves
 
-    bb.check_clear_filled_rowcol([12])
-    # Print expected and actual masks
-    full_board = bb.red_board | bb.blue_board
-    row_mask = bb.row_masks[test_row]
-    masked_row_board = full_board & row_mask
+"""
+def v5_minimax_util(
+	board: Bitboard,
+	is_blue_turn: bool
+) -> float:
+	
+	from agent.program import expand
 
-    print("Expected row_mask:", bin(row_mask))
-    print("Actual masked_row_board:", bin(masked_row_board))
+	
+	possible_moves = expand(board, is_blue_turn)
 
-    if masked_row_board == row_mask:
-        print("Test passed: Row is correctly full.")
-    else:
-        print("Test failed: Row is not detected as full.")
+	return len(possible_moves)/2500
 
-    # Optional: Print the board to visually verify
-    bb.bitboard_display()
+"""
+Minimax utility function - 6
 
+Factors Considered:
+	- Amount of rows and columns filled
 
-def test_full_column():
-    bb = Bitboard()
-    test_column = 1  # Change this index to test different columns
+Notes:
+The max amount of rows/cols filled is 11. The more the number, the greater
+resistance to being completely wiped out by row/col deletion.
 
-    # Set all bits in the test_column across all rows
-    for i in range(test_column, BOARD_N * BOARD_N, BOARD_N):
-        bb.set_tile(i, PlayerColor.RED)  # Assume setting RED for simplicity
-    
-    
-    bb.set_tile(120, PlayerColor.RED)
+Big note: This is a greedy approach and not actually an optimal solution. It
+turns out that this is basically a 'minimal cover' problem, which is 
+NP-Complete. Will be too inefficient to calculate the exact amount, so we will
+just approximate
+"""
+def v6_minimax_util(
+	bitboard: Bitboard,
+	is_blue_turn: bool
+) -> float:
 
+	# Pick the board depending on the player
+	board = bitboard.blue_board if is_blue_turn else bitboard.red_board
 
-    bb.bitboard_display()
+	rows_needed = 0
+	cols_needed = 0
 
+	# Check if there is at least 1 set bit in each row
+	for row in range(BOARD_N):
+		row_mask = Bitboard.row_masks[row]
+		if board & row_mask != 0:
+			rows_needed += 1
 
-    full_board = bb.red_board | bb.blue_board
-    col_mask = bb.col_masks[test_column]
-    masked_col_board = full_board & col_mask
-    print("Full board before clearing:             ", bin(full_board))
-    print("Expected column_mask before clearing:            ", bin(col_mask))
-    print("Actual masked_col_board before clearing:         ", bin(masked_col_board))
+	# Check if there is at least 1 set bit in each column
+	for col in range(BOARD_N):
+		col_mask = Bitboard.col_masks[col]
+		if board & col_mask != 0:
+			cols_needed += 1
+	min_clears_needed = min(rows_needed, cols_needed)
 
-    if masked_col_board == col_mask:
-        print("fIRST Test passed: Column is correctly full.")
-    else:
-        print("First Test failed: Column is not detected as full.")
+	# Normalise and return
 
-    # Now manually call the check function
-    #print(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
-    bb.check_clear_filled_rowcol(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
-
-    # Print expected and actual masks
-    full_board = bb.red_board | bb.blue_board
-    col_mask = bb.col_masks[test_column]
-    masked_col_board = full_board & col_mask
-
-    print("Full board after clearing:              ", bin(full_board))
-    print("Expected column_mask after clearing:             ", bin(col_mask))
-    print("Actual masked_col_board after clearing: ", bin(masked_col_board))
-
-
-    # this will return fail, but that is correct, because the masked_col_board, eg the board & the col_mask should be 0
-    # after the col mask is cleared from the board
-    if masked_col_board == col_mask:
-        print("Second Test passed: Column is correctly full.")
-    else:
-        print("Second Test failed: Column is not detected as full.")
-
-    # Optional: Print the board to visually verify
-    bb.bitboard_display()
+	return min_clears_needed / BOARD_N
