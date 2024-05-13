@@ -24,12 +24,8 @@ eg moves you always make, like a checkmate in chess).
 
 """
 
-
-MID_GAME = 70
 OPENING = 3 # TODO Change this to another value
 END_GAME = 75
-MAX_TURN = 0
-MIN_TURN = 1
 DEPTH_VALUE = 5
 
 DIRECTIONS = ["up", "down", "left", "right"]
@@ -48,14 +44,12 @@ class Agent:
         This constructor method runs when the referee instantiates the agent.
         Any setup and/or precomputation should be done here.
         """
-        # TODO: IMPLEMENT PRECOMPUTATION HERE
         self.board = Bitboard()
         self._color = color
         self.num_moves = -1
         self.state = OPENING
         if self._color is PlayerColor.RED:
-            # Create these book moves. Try and place these moves on first 3 turns. If no moves can be made, then need to do normal search
-            self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
+            self.book_moves = [PlaceAction(
                         Coord(0, 0), 
                         Coord(1, 0), 
                         Coord(2, 0), 
@@ -72,7 +66,7 @@ class Agent:
                         Coord(9,2)
                     )]
         else:
-            self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
+            self.book_moves = [PlaceAction( 
                         Coord(0, 10), 
                         Coord(1, 10), 
                         Coord(2, 10), 
@@ -100,14 +94,7 @@ class Agent:
         to take an action. It must always return an action object. 
         """
 
-        ##test_full_column()
-        #test_row_full()
-        #return 0
-
         self.num_moves += 1
-
-        # if self.num_moves == 4:
-        #     return None
 
         # If there are still possible book moves
         if self.book_moves:
@@ -149,20 +136,14 @@ class Agent:
         self.board.place_four_tiles(color, c1,c2,c3,c4)
         self.board.check_clear_filled_rowcol(changed_indexes)
 
-        #print("Board after being updated")
-        #self.board.bitboard_display()
-
-        #print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
 def search(board, color, num_moves):
     if color == PlayerColor.RED:
-    # Minimax goes here
         result = minimax(board, True, 0, float('-inf'), float('inf'), True, num_moves)
     else:
         result = minimax(board, False, 0, float('-inf'), float('inf'), True, num_moves)
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
-    print(result[0])
     return action
 
 
@@ -170,7 +151,6 @@ def get_coord_from_index(
     indexes: list[int]
 ) -> list[Optional[PlaceAction]]:
     result = []
-    #print(indexes)
     if indexes is not None:
         for i in range(4):
             result.append(Coord(indexes[i]//11, indexes[i]%11))
@@ -198,23 +178,17 @@ def expand(
 
     moves = []
     visited = set()
-    # player_tiles is the list of indexes corresponding to the players tile
     if isRed:
         player_tiles = board.get_colour_indexes(PlayerColor.RED)
     else:
         player_tiles = board.get_colour_indexes(PlayerColor.BLUE)
-        
-    # For each tile, expand it
 
     for index in player_tiles:
         if index in visited: #Checks we havent expanded from here already
             continue
-        all_index_placements = iterative_expand(board, index, isRed) #TODO: change back to wrapper function call
+        all_index_placements = iterative_expand(board, index, isRed) 
         moves.extend(all_index_placements)
         visited.add(index) 
-        
-    #TODOL move ordering
-    #moves.sort(key=lambda x: evaluation(x[0], PlayerColor.RED, 4, 2))
     
     return moves
 
@@ -229,7 +203,7 @@ def iterative_expand(
     seen_hashes = set()
 
     while queue:
-        current_board, current_index, shape, depth = queue.popleft() # Possible issue here. depth is Literal[1]?
+        current_board, current_index, shape, depth = queue.popleft() 
 
         if depth == 5:
             
@@ -262,26 +236,16 @@ def minimax(
     num_moves: int,
     past = {}
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
-    # TODO: Move ordering via evaluation
-    #TODO : most efficient, works ?
-    print("Depth of minimax = " + str(depth))
 
     board_key = board.get_hash()
     if board_key in past:
         return past[board_key]
     if maximizingPlayer:
-        # print("\n")
-        # board.bitboard_display()
-        # print("\n")
-        return max_value(board.copy(), isRed, depth, alpha, beta, num_moves, past) #TODO: Implement clone > deepcopy
-        
+        return max_value(board.copy(), isRed, depth, alpha, beta, num_moves, past)
     else:
-        # print("\n")
-        # board.bitboard_display()
-        # print("\n")
         return min_value(board.copy(), isRed, depth, alpha, beta, num_moves, past)
 
-#TODO: Pass beta properly so it is updated
+
 def max_value(board, isRed, depth, alpha, beta, num_moves, past):
     maxEval = float('-inf')
     best_move = None
@@ -297,9 +261,7 @@ def max_value(board, isRed, depth, alpha, beta, num_moves, past):
             best_coords = child[1]
         alpha = max(alpha, maxEval) 
         beta = min(beta, eval_score)
-        #print("beta: " + str(beta))
         if beta <= alpha:
-            #print("pruned")
             maxEval = beta
             break
     past[board.get_hash()] = maxEval, best_move, best_coords
@@ -310,9 +272,6 @@ def min_value(board, isRed, depth, alpha, beta, num_moves, past):
     minEval = float('inf')
     best_move = None
     best_coords = None
-    # print("\n")
-    # board.bitboard_display()
-    # print("\n")
     if cutoff_test(depth, num_moves):
         eval_score = evaluation(board, isRed, v1_coefficient=10, v3_coefficient=5, v5_coefficient=5, v6_coefficient=2)
         return eval_score, board, None
@@ -325,20 +284,14 @@ def min_value(board, isRed, depth, alpha, beta, num_moves, past):
             best_coords = child[1]
         alpha = max(alpha, minEval) 
         beta = min(beta, eval_score)
-        #print("beta: " + str(beta))
         if beta <= alpha:
-            # print("\n")
-            # child[0].bitboard_display()
-            # print("\n")
             minEval = alpha
-            #print("pruned")
             break
     past[board.get_hash()] = minEval, best_move, best_coords
     return minEval, best_move, best_coords
 
-# Checks if the move is a completed game(very unlikely), or we have reached our desired depth
+
 def cutoff_test(depth, num_moves):
-    #print(depth)
     if num_moves < 10:
         comp = 1
     else: 
@@ -379,13 +332,8 @@ def expand_out_sexy_style(
     # Add all of the boards of depth 4 and return
     if depth == 5:
         
-        #print("Before clear")
-        #board.bitboard_display()
         # See if piece fills up rows or columns and delete them
         board.check_clear_filled_rowcol(current_shape[1:])
-        #print("After clear")
-
-        #board.bitboard_display()
         # Hash the board and check for duplicates. If none, add the board and
         # shape as a child
         board_hash = board.get_hash()
@@ -430,23 +378,8 @@ def init_expand_from_tile(
 
     
     return iterative_expand(board, start_index, player_colour)
-    # return expand_out_sexy_style(board, start_index, player_colour, 1, [start_index], all_shapes, seen_hashes)
         
 
-
-
-
-###### Functions specific to Minimax #####
-
-#TODO: develop a better way of saving + storing child nodes, use acutal board type
-# class Move:
-#     def __init__(self, value:int, board:board) -> None:
-#         self.value = value
-#         self.board = board
-    
-## PUT MINIMAX BACK HERE
-
-# Will evaluate a board state and assign it a value
 def evaluation(
     board: Bitboard, 
     isRed: bool,
@@ -466,19 +399,11 @@ def evaluation(
                 v3_coefficient * opp_branching_factor +
                 v5_coefficient * player_branching_factor +
                 v6_coefficient * rows_cols_filled)
-
     return goodness
 
 
-#returns the best move based on an end game scenario
 def endgame_search(board, color):
-    # May not be needed as we could simply modify the heuristic 
-    #TODO: Implement me
     return search(board,color)
-
-
-
-
 
 
 # Utility functions
@@ -510,13 +435,9 @@ def v1_minimax_util(
 	# number, the better move it is
 
 
-	# Need to normalise this value. I suppose the maximum ratio would be 121:0,
-	# so for now we will divide by 121
 	if is_blue_turn:
-		#print((blue_counts/red_counts)/(BOARD_N))
 		return (blue_counts/red_counts)/(BOARD_N)
 	else:
-		#print((red_counts/blue_counts)/(BOARD_N ))
 		return (red_counts/blue_counts)/(BOARD_N)
 
 
@@ -603,7 +524,4 @@ def v6_minimax_util(
 		if board & col_mask != 0:
 			cols_needed += 1
 	min_clears_needed = min(rows_needed, cols_needed)
-
-	# Normalise and return
-
 	return min_clears_needed / BOARD_N

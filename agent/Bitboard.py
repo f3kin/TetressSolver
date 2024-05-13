@@ -1,4 +1,3 @@
-# Represent the board with a NumPy int array, 0 = empty, 1 = red, 2 = blue
 
 from dataclasses import dataclass
 from referee.game.constants import BOARD_N
@@ -15,37 +14,20 @@ class Bitboard:
 	# computation time when creating new bitboards
 
 	row_masks = [(1 << BOARD_N) - 1 << (i * BOARD_N) for i in range(BOARD_N)]
-	#for i in range(BOARD_N):
-	#	print(bin(row_masks[i]))
 
 	col_masks = [0 for _ in range(BOARD_N)]
 	
 	for j in range(BOARD_N):
 		for k in range(BOARD_N):
 			col_masks[j] |= (1 << (j + k * BOARD_N))
-		#print(bin(col_masks[j]))
 
 	def __init__(
 		self
 	):
 		self.red_board = 0
 		self.blue_board = 0
-
-		#print(len(bin(self.red_board)))
-		# Size of the board, 121 bits
 		self.total_bits = BOARD_N * BOARD_N
 
-	# def clone(self):
-    #     # Create a new instance of the Bitboard class
-	# 	cloned_board = Bitboard()
-	# 	cloned_board.red_board = self.red_board
-	# 	cloned_board.blue_board = self.blue_board
-    #     # Copy the relevant attributes from the original instance to the new one
-    #     # For example:
-    #     # cloned_board.attribute1 = self.attribute1
-    #     # cloned_board.attribute2 = self.attribute2
-    #     # ...
-	# 	return cloned_board
 	
 	"""
 	Input:
@@ -67,7 +49,6 @@ class Bitboard:
 			self.red_board |= (1 << index)
 		else:
 			self.blue_board |= (1 << index) 
-		#TODO: COULD BE AN ISSUE COS I CHANGE FROM ELIF TO ELSE
 
 	"""
 	Input:
@@ -155,12 +136,7 @@ class Bitboard:
 			
 			row_mask = Bitboard.row_masks[row] # Precomputed row all set bits
 			masked_row_board = full_board & row_mask
-			# If row is full in the full board, then add it to the combined
-			# mask we will use to clear rows/cols at the end
 
-			#print(bin(full_board & row_mask))
-			#print("masked row board = " + str(bin(masked_row_board)))
-			#print("row mask = " + str(bin(row_mask)))
 			if masked_row_board == row_mask:
 				combined_masks |= row_mask
 
@@ -170,8 +146,6 @@ class Bitboard:
 			masked_col_board = full_board & col_mask
 			# If col is full in the full board, then add it to the combined
 			# mask we will use to clear rows/cols at the end
-			#print(masked_col_board)
-			#print(col_mask)
 
 			if masked_col_board == col_mask:
 				#print("Test")
@@ -244,8 +218,6 @@ class Bitboard:
 		# Get the corresponding board of the current player
 		if color == PlayerColor.RED:
 			temp = self.red_board
-			#print(bin(temp))
-			#print(bin(self.blue_board))
 		else:
 			temp = self.blue_board
 
@@ -450,23 +422,6 @@ def get_index_from_coord(
 	coord: Coord
 ) -> int:
 	return coord.r * BOARD_N + coord.c
-
-
-#def Bitboard_to_OG(
-#	board: Bitboard
-#) -> Board:
-#	result = Board()
-#	for i in range(BOARD_N ** 2):
-#		if board.red_board & (1 << i): # On bit in the red board
-#			row = i//11
-#			col = i % 11
-#			result[(row,col)] == PlayerColor.RED
-#		elif self.blue_board & (1 << i): # On bit in the blue board
-#			row = i//11
-#			col = i % 11
-#			result[(row,col)] == PlayerColor.Blue
-
-#	return result
 
 
 """
