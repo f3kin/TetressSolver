@@ -1,12 +1,8 @@
 
-from dataclasses import dataclass
 from referee.game.constants import BOARD_N
 from referee.game.player import PlayerColor
 from referee.game.coord import Coord
-from referee.game.pieces import PieceType, _TEMPLATES
-from referee.game import board
 
-from copy import deepcopy
 class Bitboard:
 
 	# Create 11 row and 11 column masks for clearing rows and columns.
