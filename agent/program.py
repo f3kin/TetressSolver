@@ -54,6 +54,7 @@ class Agent:
         self._color = color
         self.num_moves = -1
         self.state = OPENING
+        self.seen_states = {}
         if self._color is PlayerColor.RED:
             # Create these book moves. Try and place these moves on first 3 turns. If no moves can be made, then need to do normal search
             self.book_moves = [PlaceAction( #TODO: make these moves legitimate, will have to be slightly more complex, i.e. first red is open, blue is always a response to the red book move
@@ -107,6 +108,10 @@ class Agent:
 
         self.num_moves += 1
 
+        #if self.num_moves % 10 == 0:
+        #    self.seen_states = {}
+        print(len(self.seen_states))
+
         # if self.num_moves == 4:
         #     return None
 
@@ -130,9 +135,9 @@ class Agent:
 
         # If there are no more book moves, move onto search
         elif self.num_moves < END_GAME:
-            return search(self.board, self._color, self.num_moves) 
+            return search(self.board, self._color, self.num_moves, self.seen_states) 
         else:
-            return endgame_search(self.board, self._color)
+            return endgame_search(self.board, self._color, self.seen_states)
 
     def update(self, color: PlayerColor, action: Action, **referee: dict):
         """
@@ -155,12 +160,13 @@ class Agent:
 
         #print(f"Testing: {color} played PLACE action: {c1}, {c2}, {c3}, {c4}")
 
-def search(board, color, num_moves):
+def search(board, color, num_moves, seen_states):
     if color == PlayerColor.RED:
     # Minimax goes here
-        result = minimax(board, True, 0, float('-inf'), float('inf'), True, num_moves)
+        result = minimax(board, True, 1, float('-inf'), float('inf'), True, num_moves, seen_states)
     else:
-        result = minimax(board, False, 0, float('-inf'), float('inf'), True, num_moves)
+        result = minimax(board, False, 1, float('-inf'), float('inf'), True, num_moves, seen_states)
+    print("utlity = " + str(result[0]))
     coords = get_coord_from_index(result[2])
     action = PlaceAction(coords[0], coords[1], coords[2], coords[3])
     return action
@@ -194,7 +200,9 @@ Desc: Takes a board and color, finds the tiles on the board of that color, and
 def expand(
         board: Bitboard,
         isRed: bool,
+        seen_states: dict
     ) -> list[Bitboard]:
+    
 
     moves = []
     visited = set()
@@ -207,11 +215,16 @@ def expand(
     # For each tile, expand it
     
     for index in player_tiles:
-        if index in visited: #Checks we havent expanded from here already
-            continue
-        all_index_placements = iterative_expand(board, index, isRed) #TODO: change back to wrapper function call
-        moves.extend(all_index_placements)
-        visited.add(index) 
+        if index not in visited: #Checks we havent expanded from here already
+        
+            all_index_placements = iterative_expand(board, index, isRed) #TODO: change back to wrapper function call
+            for new_board, _ in all_index_placements:
+                board_hash = new_board.get_hash()
+                if board_hash not in visited:
+                    moves.append((new_board, _))
+                    visited.add(board_hash)
+                    #moves.extend(all_index_placements)
+                    #visited.add(index) 
         
     #TODOL move ordering
     #moves.sort(key=lambda x: evaluation(x[0], PlayerColor.RED, 4, 2))
@@ -358,35 +371,48 @@ def minimax(
     beta: int, 
     maximizingPlayer: bool, 
     num_moves: int,
-    past = {}
+    seen_states: dict
 ) -> Tuple[Optional[int], Optional[Bitboard], Optional[list]]:
     # TODO: Move ordering via evaluation
+    board_key = board.get_hash()
+    if board_key in seen_states:
+        state_info = seen_states[board_key]
+        return state_info['eval_score'], state_info['best_move'], state_info['best_coords']
+
     if cutoff_test(board, depth, num_moves):
-        eval_score = evaluation(board, isRed, v1_coefficient=4, v6_coefficient=2)
+        eval_score = evaluation(board, isRed, seen_states, v1_coefficient=4, v2_coefficient=10, v4_coefficient=2)
+        seen_states[board_key] = {'eval_score': eval_score, 'best_move': None, 'best_coords': None, 'branching_factor': 0}
         return eval_score, board, None
         
-    #TODO : most efficient, works ?
-    board_key = board.get_hash()
-    if board_key in past:
-        return past[board_key]
     if maximizingPlayer:
         #print("\n")
         #board.bitboard_display()
         #print("\n")
-        return max_value(board.copy(), isRed, depth, alpha, beta, num_moves, past) #TODO: Implement clone > deepcopy
+        return max_value(board.copy(), isRed, depth, alpha, beta, num_moves, seen_states) #TODO: Implement clone > deepcopy
         
     else:
         #print("\n")
         #board.bitboard_display()
        # print("\n")
-        return min_value(board.copy(), not isRed, depth, alpha, beta, num_moves, past)
+        return min_value(board.copy(), not isRed, depth, alpha, beta, num_moves, seen_states)
 
-def max_value(board, isRed, depth, alpha, beta, num_moves, past):
+def max_value(board, isRed, depth, alpha, beta, num_moves, seen_states):
+
+    board_key = board.get_hash()
     maxEval = float('-inf')
     best_move = None
     best_coords = None
-    for child in expand(board, isRed): #returns a tuple (Bitboard, coords)
-        eval_score, _, __ = minimax(child[0], isRed, depth+1, alpha, beta, False, num_moves, past)
+    children = expand(board, isRed, seen_states)
+    #print("Depth of =" + str(depth) + " and the number of the boards children = " + str(len(children)))
+
+    if not children:
+        eval_score = evaluation(board, isRed, seen_states, v1_coefficient=4, v2_coefficient=10 ,v4_coefficient=2)
+        seen_states[board_key] = {'eval_score': maxEval, 'best_move': best_move, 'best_coords': best_coords, 'branching_factor': len(children)}
+
+        return eval_score, None, None
+
+    for child in children: #returns a tuple (Bitboard, coords)
+        eval_score, _, __ = minimax(child[0], isRed, depth+1, alpha, beta, False, num_moves, seen_states)
         if eval_score is not None and eval_score > maxEval:
             maxEval = eval_score
             best_move = child[0]  
@@ -394,15 +420,25 @@ def max_value(board, isRed, depth, alpha, beta, num_moves, past):
         alpha = max(alpha, eval_score or alpha) 
         if beta <= alpha:
             break
-    past[board.get_hash()] = maxEval, best_move, best_coords
+    seen_states[board_key] = {'eval_score': maxEval, 'best_move': best_move, 'best_coords': best_coords, 'branching_factor': len(children)}
     return maxEval, best_move, best_coords
 
-def min_value(board, isRed, depth, alpha, beta, num_moves, past):
+def min_value(board, isRed, depth, alpha, beta, num_moves, seen_states):
+
+    board_key = board.get_hash()
     minEval = float('inf')
     best_move = None
     best_coords = None
-    for child in expand(board, isRed):
-        eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, True,num_moves, past)
+    children = expand(board, isRed, seen_states)
+    #print("Depth of =" + str(depth) + " and the number of the boards children = " + str(len(children)))
+
+    if not children:
+        eval_score = evaluation(board, not isRed, seen_states, v1_coefficient=4, v2_coefficient=10 ,v4_coefficient=2)
+        seen_states[board_key] = {'eval_score': minEval, 'best_move': best_move, 'best_coords': best_coords, 'branching_factor': len(children)}
+        return eval_score, None, None
+
+    for child in children:
+        eval_score, _, __ = minimax(child[0], not isRed, depth+1, alpha, beta, True,num_moves, seen_states)
         if eval_score is not None and eval_score < minEval:
             minEval = eval_score
             best_move = child[0]
@@ -410,19 +446,20 @@ def min_value(board, isRed, depth, alpha, beta, num_moves, past):
         beta = min(beta, eval_score or beta)
         if beta <= alpha:
             break
-    past[board.get_hash()] = minEval, best_move, best_coords
+    seen_states[board_key] = {'eval_score': minEval, 'best_move': best_move, 'best_coords': best_coords, 'branching_factor': len(children)}
     return minEval, best_move, best_coords
 
 # Will evaluate a board state and assign it a value
 def evaluation(
     board: Bitboard, 
     isRed: bool,
+    seen_states: dict,
     v1_coefficient: int,
-    v6_coefficient: int
+    v2_coefficient: int,
+    v4_coefficient: int
 ) -> float:
 
-
-    goodness = v1_coefficient * v1_minimax_util(board, not isRed) + v6_coefficient * v6_minimax_util(board, not isRed)
+    goodness = v1_coefficient * v1_minimax_util(board, not isRed) + v2_coefficient *v2_minimax_util(board, seen_states) + v4_coefficient * v4_minimax_util(board, not isRed)
     
     return goodness
 
@@ -448,96 +485,3 @@ def endgame_search(board, color):
     # May not be needed as we could simply modify the heuristic 
     #TODO: Implement me
     return search(board,color)
-
-
-
-
-
-
-
-
-
-# TESTING FUNCTIONS
-
-
-
-
-def test_row_full():
-    bb = Bitboard()
-    test_row = 1  # Testing the third row
-
-    # Set all bits in the test_row
-    for i in range(test_row * BOARD_N, (test_row + 1) * BOARD_N):
-        bb.set_tile(i, PlayerColor.RED)
-
-
-    bb.bitboard_display()
-
-    bb.check_clear_filled_rowcol([12])
-    # Print expected and actual masks
-    full_board = bb.red_board | bb.blue_board
-    row_mask = bb.row_masks[test_row]
-    masked_row_board = full_board & row_mask
-
-    print("Expected row_mask:", bin(row_mask))
-    print("Actual masked_row_board:", bin(masked_row_board))
-
-    if masked_row_board == row_mask:
-        print("Test passed: Row is correctly full.")
-    else:
-        print("Test failed: Row is not detected as full.")
-
-    # Optional: Print the board to visually verify
-    bb.bitboard_display()
-
-
-def test_full_column():
-    bb = Bitboard()
-    test_column = 1  # Change this index to test different columns
-
-    # Set all bits in the test_column across all rows
-    for i in range(test_column, BOARD_N * BOARD_N, BOARD_N):
-        bb.set_tile(i, PlayerColor.RED)  # Assume setting RED for simplicity
-    
-    
-    bb.set_tile(120, PlayerColor.RED)
-
-
-    bb.bitboard_display()
-
-
-    full_board = bb.red_board | bb.blue_board
-    col_mask = bb.col_masks[test_column]
-    masked_col_board = full_board & col_mask
-    print("Full board before clearing:             ", bin(full_board))
-    print("Expected column_mask before clearing:            ", bin(col_mask))
-    print("Actual masked_col_board before clearing:         ", bin(masked_col_board))
-
-    if masked_col_board == col_mask:
-        print("fIRST Test passed: Column is correctly full.")
-    else:
-        print("First Test failed: Column is not detected as full.")
-
-    # Now manually call the check function
-    #print(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
-    bb.check_clear_filled_rowcol(list(range(test_column, BOARD_N * BOARD_N, BOARD_N)))
-
-    # Print expected and actual masks
-    full_board = bb.red_board | bb.blue_board
-    col_mask = bb.col_masks[test_column]
-    masked_col_board = full_board & col_mask
-
-    print("Full board after clearing:              ", bin(full_board))
-    print("Expected column_mask after clearing:             ", bin(col_mask))
-    print("Actual masked_col_board after clearing: ", bin(masked_col_board))
-
-
-    # this will return fail, but that is correct, because the masked_col_board, eg the board & the col_mask should be 0
-    # after the col mask is cleared from the board
-    if masked_col_board == col_mask:
-        print("Second Test passed: Column is correctly full.")
-    else:
-        print("Second Test failed: Column is not detected as full.")
-
-    # Optional: Print the board to visually verify
-    bb.bitboard_display()

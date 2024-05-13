@@ -45,62 +45,41 @@ def v1_minimax_util(
 		return (red_counts/blue_counts)/(BOARD_N ** 2)
 
 
+
 """
 Minimax utility function - 2
 
 Factors Considered:
-	- Approx opponent branching factor
-
-Notes:
-For benefit, need to find balance between speed and correctness
-
+	- Oppoent next move branching factor
 """
-def v2_minimax_util():
-	return 0
+def v2_minimax_util(
+	board: Bitboard,
+	seen_states: dict
+) -> int:
+	
 
-
-"""
-Minimax utility function - 3
-
-Factors Considered:
-	- Exact opponent branching factor
-
-Notes:
-Way more computationally expensive than v2, but should give a better result
-"""
-def v3_minimax_util():
+	# Doesn't work. Never enters the if statement
+	board_hash = board.get_hash()
+	if board_hash in seen_states:
+		return seen_states[board_hash]['branching_factor']
 	return 0
 
 """
 Minimax utility function - 4
 
 Factors Considered:
-	- Agent approx branching factor 
-
-Notes:
-This is considering branching factor before opponent moves again
-
-"""
-
-def v4_minimax_util():
-	return 0
-
-"""
-Minimax utility function - 5
-
-Factors Considered:
-	- Exact agent branching factor
+	- Agent next move branching factor
 
 Notes:
 Calculated before opponent makes moves
 
 """
-def v5_minimax_util():
+def v3_minimax_util():
 	return 0
 
 
 """
-Minimax utility function - 6
+Minimax utility function - 4
 
 Factors Considered:
 	- Amount of rows and columns filled
@@ -114,7 +93,7 @@ turns out that this is basically a 'minimal cover' problem, which is
 NP-Complete. Will be too inefficient to calculate the exact amount, so we will
 just approximate
 """
-def v6_minimax_util(
+def v4_minimax_util(
 	bitboard: Bitboard,
 	is_blue_turn: bool
 ) -> float:
